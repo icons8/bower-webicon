@@ -1,1 +1,1 @@
-# i8-icon-bower
+# Installing i8-icon

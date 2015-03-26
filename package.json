@@ -1,0 +1,21 @@
+{
+  "name": "i8-icon",
+  "homepage": "http://icons8.com",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/icons8/i8-icon.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "icons8",
+    "i8",
+    "icon",
+    "icon-set",
+    "svg-icon"
+  ],
+  "bugs": {
+    "url": "https://github.com/icons8/i8-icon/issues"
+  }
+}
