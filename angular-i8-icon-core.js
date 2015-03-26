@@ -1151,6 +1151,10 @@ di('AbstractRemoteResourceScope', function(di) {
         _params = urlConfig.params;
       }
 
+      if (url.slice(0, 2) === '//') {
+        url = window.document.location.protocol + url;
+      }
+
       return {
         url: url,
         params: mergeObjects({}, params || {}, _params || {})
