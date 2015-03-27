@@ -744,7 +744,7 @@ di('ScopeCollection', function(di) {
 
       return Promise.all(
         this.collection.map(function(item) {
-          return Promise.resolve(item.preload(iconId))
+          return Promise.resolve(item.preload())
             .then(null, function() {
               return false;
             })
@@ -1472,6 +1472,17 @@ ready(function(di) {
 
 'use strict';
 
+ready(function(di) {
+  var
+    iconManager = di('iconManager');
+
+  iconManager
+    .addIconSetAlias('glyphicon', 'gi')
+    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
+
+});
+'use strict';
+
 di('i8ApiConfig', function() {
   return {
     gateway: {
@@ -1564,17 +1575,6 @@ ready(function(di) {
 });
 
 
-'use strict';
-
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
-
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
 'use strict';
 
 di('Promise', function() {
