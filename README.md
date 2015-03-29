@@ -31,14 +31,14 @@ bower update
 ```
 
 > Please note that i8-icon requires **Angular 1.1.x** or higher for use as Angular module.
-> Please note that i8-icon requires **jQuery 1.4.x** or higher for use as jQuery plugin.
+> Please note that i8-icon requires **jQuery 1.8.x** or higher for use as jQuery plugin.
 
 
-### Using the i8-icon Library
+## Using the i8-icon Library
 
 Simply include the scripts and stylesheet in your main HTML file, in the order shown in the example below. Note that npm will install the files under `/node_modules/i8-icon/` and bower will install them under `/bower_components/i8-icon/`.
 
-#### Single icon (Angular version)
+### Single icon (Angular version)
 ```
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.js"></script>
 <script type="text/javascript" src="/bower_components/i8-icon/angular-i8-icon.js"></script>
@@ -61,7 +61,7 @@ Simply include the scripts and stylesheet in your main HTML file, in the order s
 ```
 
 
-#### Single icon (jQuery version)
+### Single icon (jQuery version)
 ```
 <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.js"></script>
 <script type="text/javascript" src="/bower_components/i8-icon/jquery-i8-icon.js"></script>
