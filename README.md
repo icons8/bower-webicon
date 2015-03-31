@@ -31,12 +31,57 @@ bower update
 ```
 
 > Please note that i8-icon requires **Angular 1.1.x** or higher for use as Angular module.
-> Please note that i8-icon requires **jQuery 1.4.x** or higher for use as jQuery plugin.
+> Please note that i8-icon requires **jQuery 1.8.x** or higher for use as jQuery plugin.
 
 
-### Using the i8-icon Library
+## Using the i8-icon Library
 
-Now that you have installed the Angular libraries, simply include the scripts and 
-stylesheet in your main HTML file, in the order shown in the example below. Note that npm 
-will install the files under `/node_modules/i8-icon/` and bower will install them 
-under `/bower_components/i8-icon/`.
+Simply include the scripts and stylesheet in your main HTML file, in the order shown in the example below. Note that npm will install the files under `/node_modules/i8-icon/` and bower will install them under `/bower_components/i8-icon/`.
+
+### Single icon (Angular version)
+```
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.js"></script>
+<script type="text/javascript" src="/bower_components/i8-icon/angular-i8-icon.js"></script>
+
+<i8-icon icon="clock"></i8-icon>
+<span i8-icon="calendar"></span>
+<div data-i8-icon="checkmark"></div>
+<i8-icon icon="assets/icons/svg/search.svg"></i8-icon>
+
+<script>
+  angular
+    .module('app', ['i8.icon'])
+    .config(function($i8IconProvider) {
+      $i8IconProvider
+        .icon('clock', 'assets/icons/svg/clock.svg')
+        .icon('calendar', 'assets/icons/svg/calendar.svg')
+        .icon('checkmark', 'assets/icons/svg/checkmark.svg');
+    });
+</script>
+```
+
+
+### Single icon (jQuery version)
+```
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.js"></script>
+<script type="text/javascript" src="/bower_components/i8-icon/jquery-i8-icon.js"></script>
+
+<i8-icon icon="clock"></i8-icon>
+<span i8-icon="calendar"></span>
+<div class="i8-icon i8-icon-checkmark"></div>
+<i8-icon icon="assets/icons/svg/search.svg"></i8-icon>
+
+<script>
+  $(function() {
+    $(document).i8icons({
+      icons: {
+        clock: 'assets/icons/svg/clock.svg',
+        calendar: 'assets/icons/svg/calendar.svg',
+        checkmark: 'assets/icons/svg/checkmark.svg'
+      }
+    });
+  });
+</script>
+```
+
+More demo [here](http://icons8.github.io/i8-icon/)
