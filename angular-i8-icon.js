@@ -275,13 +275,13 @@ di('iconManager', function(di) {
         ? getExt(url())
         : getExt(url + '');
 
-      return ext == 'svg'
+      return ext == 'svg' || !ext
         ? this.addSvgIcon(id, urlConfig, options)
         : this.addImageIcon(id, urlConfig)
       ;
 
       function getExt(url) {
-        return ((url.split('?')[0] || '').split('.').slice(-1)[0] || '').toLowerCase();
+        return (((url.split('?')[0] || '').split(/[/\\]/).slice(-1)[0] || '').split('.').slice(-1)[0] || '').toLowerCase();
       }
     },
 
@@ -969,7 +969,7 @@ di('SvgIcon', function(di) {
         for (index = 0; index < attributes.length; index++) {
           svgNode.setAttribute(attributes[index].name, attributes[index].value);
         }
-        element = svgElement.append(node.children);
+        element = svgElement.append(nodeWrapper(node).children());
       }
       else {
         element = nodeWrapper('<svg xmlns="http://www.w3.org/2000/svg">').append(element);
@@ -1015,7 +1015,6 @@ di('SvgIcon', function(di) {
       });
 
     this.iconSize = iconSize;
-
     AbstractElementIcon.call(this, SVG_ICON_CLASS, element);
   }
 
