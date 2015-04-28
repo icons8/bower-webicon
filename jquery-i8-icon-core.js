@@ -1448,6 +1448,17 @@ ready(function(di) {
     iconManager = di('iconManager');
 
   iconManager
+    .addIconSetAlias('glyphicon', 'gi')
+    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
+
+});
+'use strict';
+
+ready(function(di) {
+  var
+    iconManager = di('iconManager');
+
+  iconManager
     .addFontIconSet(
       'fa',
       function(name, params) {
@@ -1469,17 +1480,6 @@ ready(function(di) {
 
 });
 
-'use strict';
-
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
-
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
 'use strict';
 
 di('Promise', function() {
@@ -1782,22 +1782,22 @@ IconPlugin._applyConfig = function(config) {
   }
   config = config || {};
 
-  normalizeConfigs(config.icons, normalizeUrlBasedConfig).forEach(function(config) {
+  normalizeConfigs(config.icons || config.icon, normalizeUrlBasedConfig).forEach(function(config) {
     if (!iconManager.hasSingleIcon(config.id)) {
       iconManager.addIcon(config.id, config.url, config);
     }
   });
-  normalizeConfigs(config["icon-sets"] || config.iconSets, normalizeUrlBasedConfig).forEach(function(config) {
+  normalizeConfigs(config["icon-sets"] || config.iconSets || config["icon-set"] || config.iconSet, normalizeUrlBasedConfig).forEach(function(config) {
     if (!iconManager.hasIconSet(config.id)) {
       iconManager.addSvgIconSet(config.id, config.url, config);
     }
   });
-  normalizeConfigs(config.fonts, normalizeClassNameBasedConfig).forEach(function(config) {
+  normalizeConfigs(config.fonts || config.font, normalizeClassNameBasedConfig).forEach(function(config) {
     if (!iconManager.hasIconSet(config.id)) {
       iconManager.addFontIconSet(config.id, config.className);
     }
   });
-  normalizeConfigs(config.sprites, normalizeClassNameBasedConfig).forEach(function(config) {
+  normalizeConfigs(config.sprites || config.sprite, normalizeClassNameBasedConfig).forEach(function(config) {
     if (!iconManager.hasIconSet(config.id)) {
       iconManager.addSpriteIconSet(config.id, config.className);
     }

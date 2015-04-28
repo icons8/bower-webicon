@@ -1448,6 +1448,17 @@ ready(function(di) {
     iconManager = di('iconManager');
 
   iconManager
+    .addIconSetAlias('glyphicon', 'gi')
+    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
+
+});
+'use strict';
+
+ready(function(di) {
+  var
+    iconManager = di('iconManager');
+
+  iconManager
     .addFontIconSet(
       'fa',
       function(name, params) {
@@ -1471,21 +1482,10 @@ ready(function(di) {
 
 'use strict';
 
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
-
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
-'use strict';
-
 di('i8ApiConfig', function() {
   return {
     gateway: {
-      url: '//api.icons8.com/icon-sets'
+      url: '//api.icons8.com/api/iconsets/svg-symbol'
     }
   };
 });
@@ -1500,7 +1500,7 @@ ready(function(di) {
       win8: ['win', 'w'],
       android: ['kitkat', 'ak', 'a-k', 'k'],
       androidL: ['android-l', 'al', 'a-l', 'l'],
-      colored: ['color', 'c']
+      flat_color: ['color', 'c', 'colored']
     },
     platformsMap,
     possiblePrefixes;

@@ -1448,6 +1448,17 @@ ready(function(di) {
     iconManager = di('iconManager');
 
   iconManager
+    .addIconSetAlias('glyphicon', 'gi')
+    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
+
+});
+'use strict';
+
+ready(function(di) {
+  var
+    iconManager = di('iconManager');
+
+  iconManager
     .addFontIconSet(
       'fa',
       function(name, params) {
@@ -1469,17 +1480,6 @@ ready(function(di) {
 
 });
 
-'use strict';
-
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
-
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
 'use strict';
 
 di('buildUrlParams', function() {
