@@ -231,7 +231,13 @@ di('SvgIcon', function(di) {
 
     options = parseSvgOptions(options);
 
-    element.removeAttr('id');
+    [
+      'id',
+      'x',
+      'y'
+    ].forEach(function(attr) {
+        element.removeAttr(attr);
+      });
 
     node = element[0];
     if (node.tagName != 'svg') {
@@ -262,7 +268,7 @@ di('SvgIcon', function(di) {
         }
       });
 
-    iconSize = options.iconSize || iconManager.getDefaultIconSize();
+    iconSize = options.iconSize || iconManager.getDefaultSvgIconSize();
 
     attributes = {
       fit: '',
@@ -316,15 +322,21 @@ di('AbstractCssClassIconSetScope', function(di) {
     inherit = di('inherit')
     ;
 
-  function AbstractCssClassIconSetScope(id, classResolver) {
+  function AbstractCssClassIconSetScope(id, cssClassResolver, options) {
+    AbstractScope.call(this, id, options);
 
-    AbstractScope.call(this, id);
-    this.classResolver = parseClassResolver(classResolver);
+    this._classResolver = parseCssClassResolver(cssClassResolver);
   }
 
-  return inherit(AbstractCssClassIconSetScope, AbstractScope);
+  return inherit(AbstractCssClassIconSetScope, AbstractScope, {
 
-  function parseClassResolver(classResolver) {
+    _resolveCssClass: function(className) {
+      return this._classResolver(className);
+    }
+
+  });
+
+  function parseCssClassResolver(classResolver) {
     var
       parts;
     if (typeof classResolver == 'function') {
@@ -347,10 +359,11 @@ di('AbstractRemoteResourceScope', function(di) {
     inherit = di('inherit')
   ;
 
-  function AbstractRemoteResourceScope(id, urlConfig) {
-    AbstractScope.call(this, id);
+  function AbstractRemoteResourceScope(id, urlConfig, options) {
+    AbstractScope.call(this, id, options);
 
-    this.urlResolver = parseUrlResolver(urlConfig);
+    this._urlResolver = parseUrlResolver(urlConfig);
+    this._preloadable = this.options.preloadable || typeof this.options.preloadable == 'undefined';
     this._cache = null;
     this._resource = null;
   }
@@ -358,7 +371,13 @@ di('AbstractRemoteResourceScope', function(di) {
   return inherit(AbstractRemoteResourceScope, AbstractScope, {
 
     preload: function() {
-      return this._getResource();
+      return this._preloadable
+        ? this._getResource()
+        : true;
+    },
+
+    _resolveUrl: function(url) {
+      return this._urlResolver(url);
     },
 
     _getResource: function() {
@@ -423,6 +442,7 @@ di('AbstractRemoteResourceScope', function(di) {
         _params = urlConfig.params;
       }
 
+      url = String(url || '');
       if (url.slice(0, 2) === '//') {
         url = window.document.location.protocol + url;
       }
@@ -440,16 +460,21 @@ di('AbstractRemoteResourceScope', function(di) {
 di('AbstractRemoteSvgResourceScope', function(di) {
   var
     AbstractRemoteResourceScope = di('AbstractRemoteResourceScope'),
-    inherit = di('inherit')
+    inherit = di('inherit'),
+    parseSvgOptions = di('parseSvgOptions')
   ;
 
-  function AbstractRemoteSvgResourceScope(id, urlConfig, svgOptions) {
+  function AbstractRemoteSvgResourceScope(id, urlConfig, options) {
     var
-      parseSvgOptions = di('parseSvgOptions');
+      svgOptions = parseSvgOptions(options),
+      self = this;
 
-    AbstractRemoteResourceScope.call(this, id, urlConfig);
+    AbstractRemoteResourceScope.call(this, id, urlConfig, options);
 
-    this.svgOptions = parseSvgOptions(svgOptions);
+    Object.keys(svgOptions)
+      .forEach(function(name) {
+        self.options[name] = svgOptions[name];
+      });
   }
 
   return inherit(AbstractRemoteSvgResourceScope, AbstractRemoteResourceScope);
@@ -459,8 +484,16 @@ di('AbstractRemoteSvgResourceScope', function(di) {
 
 di('AbstractScope', function() {
 
-  function AbstractScope(id) {
+  function AbstractScope(id, options) {
+    options = options && typeof options == 'object'
+      ? options
+      : {};
+
     this.id = id;
+    this.options = options;
+
+    this._iconIdParser = parseIconIdResolver(options.iconIdParser);
+    this._iconIdResolver = parseIconIdResolver(options.iconIdResolver);
   }
 
   AbstractScope.prototype = {
@@ -471,11 +504,27 @@ di('AbstractScope', function() {
 
     hasIcon: function() {
       return true;
+    },
+
+    _parseIconId: function(iconId, params) {
+      return this._iconIdParser(iconId, params);
+    },
+
+    _resolveIconId: function(iconId) {
+      return this._iconIdResolver(iconId);
     }
 
   };
 
   return AbstractScope;
+
+  function parseIconIdResolver(value) {
+    return typeof value == 'function'
+      ? value
+      : function(value) {
+        return value;
+      };
+  }
 
 });
 'use strict';
@@ -486,8 +535,8 @@ di('FontIconSetScope', function(di) {
     inherit = di('inherit')
     ;
 
-  function FontIconSetScope(id, classResolver) {
-    AbstractCssClassIconSetScope.call(this, id, classResolver);
+  function FontIconSetScope(id, cssClassResolver, options) {
+    AbstractCssClassIconSetScope.call(this, id, cssClassResolver, options);
   }
 
   return inherit(FontIconSetScope, AbstractCssClassIconSetScope, {
@@ -495,7 +544,7 @@ di('FontIconSetScope', function(di) {
     getIcon: function(iconId, params) {
       var
         FontIcon = di('FontIcon');
-      return new FontIcon(this.classResolver(iconId, params));
+      return new FontIcon(this._resolveCssClass(this._parseIconId(iconId, params), params));
     }
 
   });
@@ -509,8 +558,8 @@ di('ImageIconScope', function(di) {
     inherit = di('inherit')
     ;
 
-  function ImageIconScope(id, urlConfig) {
-    AbstractRemoteResourceScope.call(this, id, urlConfig);
+  function ImageIconScope(id, urlConfig, options) {
+    AbstractRemoteResourceScope.call(this, id, urlConfig, options);
   }
 
   return inherit(ImageIconScope, AbstractRemoteResourceScope, {
@@ -518,11 +567,11 @@ di('ImageIconScope', function(di) {
     _loadResource: function() {
       var
         ImageIcon = di('ImageIcon');
-      return ImageIcon.loadByUrl(this.urlResolver());
+      return ImageIcon.loadByUrl(this._resolveUrl());
     },
 
-    hasIcon: function(iconId) {
-      return iconId == this.id;
+    hasIcon: function(iconId, params) {
+      return this._parseIconId(iconId, params) == this._resolveIconId(this.id);
     },
 
     getIcon: function() {
@@ -540,16 +589,16 @@ di('SpriteIconSetScope', function(di) {
     inherit = di('inherit')
     ;
 
-  function SpriteIconSetScope(id, classResolver) {
-    AbstractCssClassIconSetScope.call(this, id, classResolver);
+  function SpriteIconSetScope(id, classResolver, options) {
+    AbstractCssClassIconSetScope.call(this, id, classResolver, options);
   }
 
   return inherit(SpriteIconSetScope, AbstractCssClassIconSetScope, {
 
-    getIcon: function(iconId) {
+    getIcon: function(iconId, params) {
       var
         SpriteIcon = di('SpriteIcon');
-      return new SpriteIcon(this.classResolver(iconId));
+      return new SpriteIcon(this._resolveCssClass(this._parseIconId(iconId, params), params));
     }
 
   });
@@ -568,15 +617,8 @@ di('SvgCumulativeIconSetScope', function(di) {
       DEFAULT_WAIT_DURATION = 10;
 
     AbstractRemoteSvgResourceScope.call(this, id, urlConfig, options);
-    options = options && typeof options == 'object'
-      ? options
-      : {};
 
-    this.iconIdResolver = typeof options.iconIdResolver == 'function'
-      ? options.iconIdResolver
-      : null;
-
-    this.waitDuration = options.waitDuration || DEFAULT_WAIT_DURATION;
+    this.waitDuration = this.options.waitDuration || DEFAULT_WAIT_DURATION;
     this.waitPromise = null;
     this.waitIconIds = [];
   }
@@ -586,7 +628,7 @@ di('SvgCumulativeIconSetScope', function(di) {
     _loadResource: function() {
       var
         SvgIconSet = di('SvgIconSet');
-      return SvgIconSet.loadByUrl(this.urlResolver(this.waitIconIds), this.svgOptions);
+      return SvgIconSet.loadByUrl(this._resolveUrl(this.waitIconIds), this.options);
     },
 
     preload: function() {
@@ -599,9 +641,7 @@ di('SvgCumulativeIconSetScope', function(di) {
         timeout = di('timeout'),
         self = this;
 
-      if (this.iconIdResolver) {
-        iconId = this.iconIdResolver(iconId, params);
-      }
+      iconId = this._parseIconId(iconId, params);
 
       if (this._resource && this._resource.exists(iconId)) {
         return Promise.resolve(this._resource.getIconById(iconId));
@@ -620,8 +660,8 @@ di('SvgCumulativeIconSetScope', function(di) {
             return self._getResource();
           }
           return self._resource.mergeByUrl(
-            self.urlResolver(self._resource.notExists(self.waitIconIds)),
-            self.svgOptions
+            self._resolveUrl(self._resource.notExists(self.waitIconIds)),
+            self.options
           );
         });
       }
@@ -647,8 +687,8 @@ di('SvgIconScope', function(di) {
     inherit = di('inherit')
     ;
 
-  function SvgIconScope(id, urlConfig, svgOptions) {
-    AbstractRemoteSvgResourceScope.call(this, id, urlConfig, svgOptions);
+  function SvgIconScope(id, urlConfig, options) {
+    AbstractRemoteSvgResourceScope.call(this, id, urlConfig, options);
   }
 
   return inherit(SvgIconScope, AbstractRemoteSvgResourceScope, {
@@ -656,11 +696,11 @@ di('SvgIconScope', function(di) {
     _loadResource: function() {
       var
         SvgIcon = di('SvgIcon');
-      return SvgIcon.loadByUrl(this.urlResolver(), this.svgOptions);
+      return SvgIcon.loadByUrl(this._resolveUrl(), this.options);
     },
 
-    hasIcon: function(iconId) {
-      return iconId == this.id;
+    hasIcon: function(iconId, params) {
+      return this._parseIconId(iconId, params) == this._resolveIconId(this.id);
     },
 
     getIcon: function() {
@@ -678,8 +718,8 @@ di('SvgIconSetScope', function(di) {
     inherit = di('inherit')
     ;
 
-  function SvgIconSetScope(id, urlConfig, svgOptions) {
-    AbstractRemoteSvgResourceScope.call(this, id, urlConfig, svgOptions);
+  function SvgIconSetScope(id, urlConfig, options) {
+    AbstractRemoteSvgResourceScope.call(this, id, urlConfig, options);
   }
 
   return inherit(SvgIconSetScope, AbstractRemoteSvgResourceScope, {
@@ -687,20 +727,23 @@ di('SvgIconSetScope', function(di) {
     _loadResource: function() {
       var
         SvgIconSet = di('SvgIconSet');
-      return SvgIconSet.loadByUrl(this.urlResolver(), this.svgOptions);
+      return SvgIconSet.loadByUrl(this._resolveUrl(), this.options);
     },
 
-    hasIcon: function(iconId) {
+    hasIcon: function(iconId, params) {
+      iconId = this._parseIconId(iconId, params);
+
       return this._getResource()
         .then(function(iconSet) {
           return iconSet.exists(iconId);
         })
     },
 
-    getIcon: function(iconId) {
+    getIcon: function(iconId, params) {
       var
         Promise = di('Promise');
 
+      iconId = this._parseIconId(iconId, params);
       return this._getResource()
         .then(function(iconSet) {
           var
@@ -756,7 +799,7 @@ di('ScopeCollection', function(di) {
         });
     },
 
-    getIconScope: function(iconId) {
+    getIconScope: function(iconId, params) {
       var
         Promise = di('Promise'),
         SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
@@ -766,7 +809,7 @@ di('ScopeCollection', function(di) {
 
       promise = Promise.all(
         collection.map(function(scope) {
-          return Promise.resolve(scope.hasIcon(iconId))
+          return Promise.resolve(scope.hasIcon(iconId, params))
             .then(function(value) {
               return value
                 ? scope
@@ -790,7 +833,7 @@ di('ScopeCollection', function(di) {
     },
 
     getIcon: function(iconId, params) {
-      return this.getIconScope(iconId)
+      return this.getIconScope(iconId, params)
         .then(function(scope) {
           return scope.getIcon(iconId, params);
         });
@@ -815,21 +858,28 @@ di('SvgIconSet', function(di) {
       nodes,
       node,
       iconSize,
-      viewBox
+      viewBox,
+      iconIdResolver,
+      svgOptions
       ;
 
-    options = parseSvgOptions(options);
+    iconIdResolver = typeof options.iconIdResolver == 'function'
+      ? options.iconIdResolver
+      : function(value) {
+        return value;
+      };
+    svgOptions = parseSvgOptions(options);
 
     this.icons = {};
 
-    viewBox = options.viewBox || element[0].getAttribute('viewBox');
-    iconSize = options.iconSize;
+    viewBox = svgOptions.viewBox || element[0].getAttribute('viewBox');
+    iconSize = svgOptions.iconSize;
 
     try {
       nodes = element[0].querySelectorAll('[id]');
       for(index = 0; index < nodes.length; index++) {
         node = nodes[index];
-        this.icons[node.getAttribute('id')] = new SvgIcon(nodeWrapper(node), {
+        this.icons[iconIdResolver(node.getAttribute('id'))] = new SvgIcon(nodeWrapper(node), {
           iconSize: iconSize,
           viewBox: viewBox
         });
@@ -838,9 +888,9 @@ di('SvgIconSet', function(di) {
     catch(e) {
       log.warn(e);
     }
-
     this.iconSize = iconSize;
     this.viewBox = viewBox;
+    this.iconIdResolver = iconIdResolver;
   }
 
   SvgIconSet.loadByUrl = function(url, options) {
@@ -966,13 +1016,13 @@ di('iconManager', function(di) {
 
   var
     CHECK_URL_REGEX = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/i,
-    DEFAULT_ICON_SIZE = 24,
+    DEFAULT_SVG_ICON_SIZE = 24,
     SINGLE_ICONS_COLLECTION_ID = '__SINGLE_ICONS_COLLECTION';
 
   function IconManager() {
     this._collections = {};
     this._defaultCollectionId = null;
-    this._defaultIconSize = DEFAULT_ICON_SIZE;
+    this._defaultSvgIconSize = DEFAULT_SVG_ICON_SIZE;
   }
 
   IconManager.prototype = {
@@ -995,7 +1045,13 @@ di('iconManager', function(di) {
       ;
 
       function getExt(url) {
-        return (((url.split('?')[0] || '').split(/[/\\]/).slice(-1)[0] || '').split('.').slice(-1)[0] || '').toLowerCase();
+        return url
+            .split('?')[0]
+            .split(/[/\\]/)
+            .slice(-1)[0]
+            .split('.')
+            .slice(-1)[0]
+            .toLowerCase();
       }
     },
 
@@ -1030,17 +1086,17 @@ di('iconManager', function(di) {
       return this;
     },
 
-    addFontIconSet: function(id, classConfig) {
+    addFontIconSet: function(id, cssClassConfig, options) {
       var
         FontIconSetScope = di('FontIconSetScope');
-      this._getCollection(id).add(new FontIconSetScope(id, classConfig));
+      this._getCollection(id).add(new FontIconSetScope(id, cssClassConfig, options));
       return this;
     },
 
-    addSpriteIconSet: function(id, classConfig) {
+    addSpriteIconSet: function(id, cssClassConfig, options) {
       var
         SpriteIconSetScope = di('SpriteIconSetScope');
-      this._getCollection(id).add(new SpriteIconSetScope(id, classConfig));
+      this._getCollection(id).add(new SpriteIconSetScope(id, cssClassConfig, options));
       return this;
     },
 
@@ -1056,13 +1112,13 @@ di('iconManager', function(di) {
       return this;
     },
 
-    setDefaultIconSize: function(iconSize) {
-      this._defaultIconSize = iconSize;
+    setDefaultSvgIconSize: function(iconSize) {
+      this._defaultSvgIconSize = iconSize;
       return this;
     },
 
-    getDefaultIconSize: function() {
-      return this._defaultIconSize;
+    getDefaultSvgIconSize: function() {
+      return this._defaultSvgIconSize;
     },
 
     preload: function() {
@@ -1114,7 +1170,7 @@ di('iconManager', function(di) {
         }
       }
       else {
-        if (this.hasSingleIcon(iconId)) {
+        if (this.hasSingleIcon(iconId, params)) {
           return this._getSingleIconsCollection().getIcon(iconId, params)
             .then(null, announceIconNotFoundForPromiseCatch(iconId));
         }
@@ -1127,11 +1183,11 @@ di('iconManager', function(di) {
       return announceIconNotFound(id);
     },
 
-    hasSingleIcon: function(id) {
+    hasSingleIcon: function(id, params) {
       return this._getSingleIconsCollection()
         .collection
         .filter(function(scope) {
-          return scope.hasIcon(id);
+          return scope.hasIcon(id, params);
         })
         .length > 0;
     },
@@ -1206,10 +1262,38 @@ di('inherit', function() {
 
 di('initIconElement', function() {
 
-  return function initIconElement(element, alt) {
+  return function initIconElement(element, alt, icon) {
     var
-      ICON_CLASS = 'i8-icon'
+      ICON_CLASS = 'i8-icon',
+      pieces
       ;
+
+    if (!alt && typeof alt != 'string') {
+      icon = String(icon || '')
+        .split(':')
+        .slice(-1)[0]
+        .trim();
+
+      if (/[/\\.]/.test(icon)) {
+        pieces = icon
+          .split(/[/\\]/)
+          .slice(-1)[0]
+          .split('.');
+
+        if (pieces.length > 1) {
+          pieces = pieces
+            .slice(0, -1);
+        }
+        alt = pieces
+          .join('.');
+      }
+      else {
+        alt = icon
+          .split(/\s/)
+          [0];
+      }
+
+    }
 
     expectAlt(element, alt || '');
     if (!element.hasClass(ICON_CLASS)) {
@@ -1359,26 +1443,27 @@ di('parseSvgOptions', function() {
 
 di('publicApi', function(di) {
   var 
-    iconManager = di('iconManager');
-  
-  return {
-    icon: function(id, urlConfig, iconSize) {
-      iconManager.addIcon(id, urlConfig, iconSize);
+    iconManager = di('iconManager'),
+    api;
+
+  api = {
+    icon: function(id, urlConfig, options) {
+      iconManager.addIcon(id, urlConfig, options);
       return this;
     },
 
-    iconSet: function(id, urlConfig, iconSize) {
-      iconManager.addSvgIconSet(id, urlConfig, iconSize);
+    svgSet: function(id, urlConfig, options) {
+      iconManager.addSvgIconSet(id, urlConfig, options);
       return this;
     },
 
-    font: function(id, classConfig) {
-      iconManager.addFontIconSet(id, classConfig);
+    font: function(id, cssClassConfig, options) {
+      iconManager.addFontIconSet(id, cssClassConfig, options);
       return this;
     },
 
-    sprite: function(id, classConfig) {
-      iconManager.addSpriteIconSet(id, classConfig);
+    sprite: function(id, cssClassConfig, options) {
+      iconManager.addSpriteIconSet(id, cssClassConfig, options);
       return this;
     },
 
@@ -1387,9 +1472,9 @@ di('publicApi', function(di) {
       return this;
     },
 
-    defaultIconSetUrl: function(url, iconSize) {
+    defaultSvgSetUrl: function(url, options) {
       iconManager
-        .addSvgIconSet(url, url, iconSize)
+        .addSvgIconSet(url, url, options)
         .setDefaultIconSet(url);
       return this;
     },
@@ -1399,8 +1484,8 @@ di('publicApi', function(di) {
       return this;
     },
 
-    defaultIconSize: function(iconSize) {
-      iconManager.setDefaultIconSize(iconSize);
+    defaultSvgIconSize: function(iconSize) {
+      iconManager.setDefaultSvgIconSize(iconSize);
       return this;
     },
 
@@ -1410,6 +1495,14 @@ di('publicApi', function(di) {
     }
 
   };
+
+  api.iconSet = api.svgSet;
+  api.defaultIconSetUrl = api.defaultSvgSetUrl;
+  api.defaultSvgIconSetUrl = api.defaultSvgSetUrl;
+  api.alias = api.sourceAlias;
+  api.default = api.defaultSource;
+
+  return api;
 
 });
 'use strict';
@@ -1448,17 +1541,6 @@ ready(function(di) {
     iconManager = di('iconManager');
 
   iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
-'use strict';
-
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
-
-  iconManager
     .addFontIconSet(
       'fa',
       function(name, params) {
@@ -1480,6 +1562,74 @@ ready(function(di) {
 
 });
 
+'use strict';
+
+ready(function(di) {
+  var
+    iconManager = di('iconManager');
+
+  iconManager
+    .addIconSetAlias('glyphicon', 'gi')
+    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
+
+});
+'use strict';
+
+di('materialDesignIconsConfig', function() {
+  return {
+    version: '1.0.1',
+    categories: [
+      'action',
+      'alert',
+      'av',
+      'communication',
+      'content',
+      'device',
+      'editor',
+      'file',
+      'hardware',
+      'image',
+      'maps',
+      'navigation',
+      'notification',
+      'social',
+      'toggle'
+    ]
+  };
+});
+
+'use strict';
+
+ready(function(di) {
+  var
+    iconManager = di('iconManager'),
+    config = di('materialDesignIconsConfig'),
+    iconIdFilter,
+    options;
+
+  iconIdFilter = function(id) {
+    return String(id || '')
+      .replace(/_/g, '-')
+      .replace(/^ic-/, '')
+      .replace(/-\d+px$/, '');
+  };
+
+  options = {
+    iconIdResolver: iconIdFilter,
+    iconIdParser: iconIdFilter,
+    preloadable: false
+  };
+
+  config.categories
+    .forEach(function(category) {
+      iconManager.addSvgIconSet(
+        'md-' + category,
+        '//cdn.rawgit.com/google/material-design-icons/' + config.version + '/sprites/svg-sprite/svg-sprite-' + category + '.svg',
+        options
+      )
+    });
+
+});
 'use strict';
 
 di('Promise', function() {
@@ -1775,64 +1925,232 @@ function IconPlugin(config) {
 IconPlugin._applyConfig = function(config) {
   var
     publicApi = di('publicApi'),
-    iconManager = di('iconManager');
+    iconManager = di('iconManager'),
+    parsedConfig,
+    addConfig,
+    addConfigDecorator,
+    configStrategies,
+    iconSetsExistenceMap = {};
 
   if (typeof config == 'function') {
     config = config(publicApi);
   }
   config = config || {};
 
-  normalizeConfigs(config.icons || config.icon, normalizeUrlBasedConfig).forEach(function(config) {
-    if (!iconManager.hasSingleIcon(config.id)) {
-      iconManager.addIcon(config.id, config.url, config);
+  parsedConfig = {};
+  addConfig = function(entity, config) {
+    if (!parsedConfig[entity]) {
+      parsedConfig[entity] = {};
     }
-  });
-  normalizeConfigs(config["icon-sets"] || config.iconSets || config["icon-set"] || config.iconSet, normalizeUrlBasedConfig).forEach(function(config) {
-    if (!iconManager.hasIconSet(config.id)) {
-      iconManager.addSvgIconSet(config.id, config.url, config);
+    if (!parsedConfig[entity][config.id]) {
+      parsedConfig[entity][config.id] = [];
     }
-  });
-  normalizeConfigs(config.fonts || config.font, normalizeClassNameBasedConfig).forEach(function(config) {
-    if (!iconManager.hasIconSet(config.id)) {
-      iconManager.addFontIconSet(config.id, config.className);
+    parsedConfig[entity][config.id].push(config);
+  };
+
+  addConfigDecorator = function(entity) {
+    return function(config) {
+      addConfig(entity, config);
     }
-  });
-  normalizeConfigs(config.sprites || config.sprite, normalizeClassNameBasedConfig).forEach(function(config) {
-    if (!iconManager.hasIconSet(config.id)) {
-      iconManager.addSpriteIconSet(config.id, config.className);
-    }
+  };
+
+  parseConfigs(
+    config.icons,
+    config.icon,
+    parseUrlBasedConfig).forEach(addConfigDecorator('icon'));
+
+  parseConfigs(
+    config.svgSets,
+    config.svgSet,
+    config.iconSets,
+    config.iconSet,
+    parseUrlBasedConfig).forEach(addConfigDecorator('svgSet'));
+
+  parseConfigs(
+    config.fonts,
+    config.font,
+    parseCssClassNameBasedConfig).forEach(addConfigDecorator('font'));
+
+  parseConfigs(
+    config.sprites,
+    config.sprite,
+    parseCssClassNameBasedConfig).forEach(addConfigDecorator('sprite'));
+
+  ['svgSet', 'font', 'sprite'].forEach(function(entity) {
+    Object.keys(parsedConfig[entity] || {}).forEach(function(id) {
+      if (!iconSetsExistenceMap.hasOwnProperty(id)) {
+        iconSetsExistenceMap[id] = iconManager.hasIconSet(id);
+      }
+    });
   });
 
-  function normalizeConfigs(configs, normalizeConfigFilter) {
+  configStrategies = {
+    icon: function(entity, config) {
+      if (!iconManager.hasSingleIcon(config.id)) {
+        publicApi.icon(config.id, config.url, config);
+      }
+    },
+    svgSet: function(entity, config) {
+      if (!iconSetsExistenceMap[config.id]) {
+        publicApi.svgSet(config.id, config.url, config);
+      }
+    }
+  };
+  configStrategies.font = configStrategies.sprite = function(entity, config) {
+    if (!iconSetsExistenceMap[config.id]) {
+      publicApi[entity](config.id, config.className, config);
+    }
+  };
+
+  Object.keys(parsedConfig).forEach(function(entity) {
+    Object.keys(parsedConfig[entity] || {}).forEach(function(id) {
+      parsedConfig[entity][id].forEach(function(config) {
+        configStrategies[entity](entity, config);
+      });
+    });
+  });
+
+  parseConfigs(
+    config.defaultSvgSetUrl,
+    config.defaultSvgIconSetUrl,
+    config.defaultIconSetUrl,
+    function(config) {
+      if (typeof config != 'object') {
+        config = {
+          url: config
+        }
+      }
+      config.url = config.url || config.uri;
+      return config.url
+        ? config
+        : null;
+    }
+  ).forEach(function(config) {
+      if (!iconManager.hasIconSet(config.url)) {
+        publicApi.defaultSvgSetUrl(config.url);
+      }
+    });
+
+  parseConfigs(
+    config.alias,
+    config.sourceAlias,
+    function(config, id) {
+      if (typeof config != 'object') {
+        config = {
+          alias: config,
+          id: id
+        }
+      }
+      config.alias = config.alias || config.sourceAlias;
+      return config.url
+        ? config
+        : null;
+    }
+  ).forEach(function(config) {
+      if (!iconManager.hasIconSet(config.id)) {
+        publicApi.sourceAlias(config.id, config.alias);
+      }
+    });
+
+  parseConfigs(
+    config.default,
+    config.defaultSource,
+    function(config) {
+      if (typeof config != 'object') {
+        config = {
+          id: config
+        }
+      }
+      return config.id
+        ? config
+        : null;
+    }
+  ).forEach(function(config) {
+      publicApi.defaultSource(config.id);
+    });
+
+  parseConfigs(
+    config.defaultSvgIconSize,
+    function(config) {
+      if (typeof config != 'object') {
+        config = {
+          size: config
+        }
+      }
+      config.size = config.size || config.iconSize || config.svgIconSize || config["icon-size"] || config["svg-icon-size"];
+      return config.size
+        ? config
+        : null;
+    }
+  ).forEach(function(config) {
+      if (!iconManager.hasIconSet(config.id)) {
+        publicApi.defaultSvgIconSize(config.id, config.url);
+      }
+    });
+
+  if (config.preload) {
+    publicApi.preload();
+  }
+
+
+  function parseConfigs(/*...configs, configParserFn*/) {
+    var
+      args = Array.prototype.slice.call(arguments),
+      configs,
+      configParserFn;
+
+    configParserFn = args.pop();
+    if (args.length > 1) {
+      return Array.prototype.concat.apply([],
+        args.map(function(configs) {
+          return parseConfigs(configs, configParserFn);
+        })
+      );
+    }
+    configs = args[0];
+
     if (configs && typeof configs == 'object') {
       if (Array.isArray(configs)) {
-        configs = configs.map(normalizeConfig);
+        configs = Array.prototype.concat.apply([], configs.map(parseConfig));
       }
       else {
-        configs = Object.keys(configs)
+        configs = Array.prototype.concat.apply([], Object.keys(configs)
           .map(function(id) {
-            return normalizeConfig(configs[id], id);
-          });
+            return parseConfig(configs[id], id);
+          })
+        );
       }
-      return configs.filter(function(config) {
-        return config;
-      });
     }
-    return [];
+    else if (typeof configs == 'string' || typeof configs == 'number') {
+      configs = [
+        parseConfig(configs)
+      ];
+    }
+    else {
+      configs = [];
+    }
+    return configs.filter(function(config) {
+      return config;
+    });
 
-    function normalizeConfig(config, id) {
+    function parseConfig(config, id) {
       config = config || {};
-      if (typeof config != 'string') {
+      if (Array.isArray(config)) {
+        return config.map(function(config) {
+          return parseConfig(config, id);
+        });
+      }
+      else if (typeof config == 'object') {
         if (!config.id && config.id !== 0) {
           config.id = id;
         }
       }
-      return normalizeConfigFilter && normalizeConfigFilter(config, id);
+      return configParserFn(config, id);
     }
   }
 
-  function normalizeUrlBasedConfig(config, id) {
-    if (typeof config == 'string') {
+  function parseUrlBasedConfig(config, id) {
+    if (typeof config != 'object') {
       config = {
         url: config,
         id: id
@@ -1844,14 +2162,14 @@ IconPlugin._applyConfig = function(config) {
       : null;
   }
 
-  function normalizeClassNameBasedConfig(config, id) {
-    if (typeof config == 'string') {
+  function parseCssClassNameBasedConfig(config, id) {
+    if (typeof config != 'object') {
       config = {
         className: config,
         id: id
       }
     }
-    config.className = config.className || config["class"];
+    config.className = config.className || config.cssClass || config.class;
     return config.id && config.className
       ? config
       : null;
@@ -1861,23 +2179,28 @@ IconPlugin._applyConfig = function(config) {
 
 function IconController(element, options) {
   var
-    initIconElement = di('initIconElement'),
-    id;
+    initIconElement = di('initIconElement');
 
   options = options || {};
   this._element = element;
+  this.options = options;
 
-  id = this._getIconId() || options.icon;
-  initIconElement(element, this._getAlt() || options.alt || id);
-  this._renderIcon(id);
+  initIconElement(element, this._getAlt(), this._getIconId());
+  this._renderIcon();
 }
 
 IconController.prototype = {
 
   _getAlt: function() {
     var
-      element = this._element;
-    return element.attr('alt') || element.data('alt');
+      element = this._element,
+      altAttr = element.attr('alt'),
+      altData = element.data('alt');
+
+    if (altAttr === '' || altData === '' || this.options.alt === '') {
+      return '';
+    }
+    return altAttr || altData || this.options.alt;
   },
 
   _getIconId: function() {
@@ -1918,7 +2241,7 @@ IconController.prototype = {
         [0];
     }
 
-    return id;
+    return id || this.options.icon;
   },
 
   _renderIcon: function(iconId) {
@@ -1946,7 +2269,14 @@ IconController.prototype = {
   },
 
   refresh: function(options) {
-    this._renderIcon(this._getIconId() || options.icon);
+    var
+      iconId;
+
+    iconId = this.options.icon;
+    this.options = options;
+    this.options.icon = this.options.icon || iconId;
+
+    this._renderIcon();
   }
 
 };

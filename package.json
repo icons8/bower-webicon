@@ -1,7 +1,7 @@
 {
   "name": "i8-icon",
   "homepage": "http://icons8.com",
-  "version": "0.0.2",
+  "version": "0.9.0",
   "main": "index.js",
   "repository": {
     "type": "git",
