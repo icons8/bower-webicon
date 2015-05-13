@@ -1930,7 +1930,8 @@ di('Promise', function(injector) {
 
 ready(function bootstrap(injector) {
   var
-    jQuery = injector('jQuery');
+    jQuery = injector('jQuery'),
+    IconsPlugin = injector('IconsPlugin');
 
   jQuery(function() {
     var
