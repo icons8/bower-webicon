@@ -1,6 +1,6 @@
 {
   "name": "i8-icon",
-  "version": "0.0.2",
+  "version": "0.9.1",
   "main": [
     "angular-i8-icon.js",
     "jquery-i8-icon.js"

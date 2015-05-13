@@ -2,7 +2,7 @@
 
 'use strict';
 
-di('ScopeCollection', function(di) {
+di('ScopeCollection', function(injector) {
 
   function ScopeCollection() {
     this.collection = [];
@@ -12,8 +12,8 @@ di('ScopeCollection', function(di) {
 
     add: function(scope) {
       var
-        SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
-        FontIconSetScope = di('FontIconSetScope');
+        SvgCumulativeIconSetScope = injector('SvgCumulativeIconSetScope'),
+        FontIconSetScope = injector('FontIconSetScope');
 
       if (scope instanceof SvgCumulativeIconSetScope || scope instanceof FontIconSetScope) {
         this.collection.push(scope);
@@ -25,7 +25,7 @@ di('ScopeCollection', function(di) {
 
     preload: function() {
       var
-        Promise = di('Promise');
+        Promise = injector('Promise');
 
       return Promise.all(
         this.collection.map(function(item) {
@@ -44,8 +44,8 @@ di('ScopeCollection', function(di) {
 
     getIconScope: function(iconId, params) {
       var
-        Promise = di('Promise'),
-        SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
+        Promise = injector('Promise'),
+        SvgCumulativeIconSetScope = injector('SvgCumulativeIconSetScope'),
         collection = this.collection,
         promise
         ;
@@ -89,14 +89,14 @@ di('ScopeCollection', function(di) {
 });
 'use strict';
 
-di('SvgIconSet', function(di) {
+di('SvgIconSet', function(injector) {
 
   function SvgIconSet(element, options) {
     var
-      log = di('log'),
-      parseSvgOptions = di('parseSvgOptions'),
-      SvgIcon = di('SvgIcon'),
-      nodeWrapper = di('nodeWrapper'),
+      log = injector('log'),
+      parseSvgOptions = injector('parseSvgOptions'),
+      SvgIcon = injector('SvgIcon'),
+      nodeWrapper = injector('nodeWrapper'),
       index,
       nodes,
       node,
@@ -122,7 +122,7 @@ di('SvgIconSet', function(di) {
       nodes = element[0].querySelectorAll('[id]');
       for(index = 0; index < nodes.length; index++) {
         node = nodes[index];
-        this.icons[iconIdResolver(node.getAttribute('id'))] = new SvgIcon(nodeWrapper(node), {
+        this.icons[iconIdResolver(node.getAttribute('id'))] = new SvgIcon(nodeWrapper(node.cloneNode(true)), {
           iconSize: iconSize,
           viewBox: viewBox
         });
@@ -138,7 +138,7 @@ di('SvgIconSet', function(di) {
 
   SvgIconSet.loadByUrl = function(url, options) {
     var
-      loadSvgByUrl = di('loadSvgByUrl');
+      loadSvgByUrl = injector('loadSvgByUrl');
 
     return loadSvgByUrl(url)
       .then(function(element) {
@@ -201,61 +201,117 @@ di('SvgIconSet', function(di) {
 
 'use strict';
 
-function di(name, provider) {
+function createInjector(fn) {
   var
-    error,
-    baseProvider,
-    providers,
-    instances;
+    providers = {},
+    instances = {};
 
-  providers = di.providers = di.providers || {};
-  instances = di.instaces = di.instaces || {};
+  Object.keys(di.providers).forEach(function(name) {
+    providers[name] = di.providers[name];
+  });
 
-  if (provider) {
-    if (instances.hasOwnProperty(name)) {
-      error = new Error('Cannot override instantiated service "' + name + '"');
-      console.error(error);
-      throw error;
-    }
-    if (!(provider instanceof Function)) {
-      error = new Error('Incorrect provider function "' + name + '"');
-      console.error(error);
-      throw error;
-    }
+  function injector(name, provider) {
+    var
+      error,
+      baseProvider;
 
-    if (providers.hasOwnProperty(name)) {
-      baseProvider = providers[name];
-      providers[name] = function(di) {
-        return new provider(di, new baseProvider(di));
-      };
-    }
-    else {
-      providers[name] = provider;
-    }
-  }
-  else {
-    if (!providers[name]) {
-      error = new Error('Cannot found service provider "' + name + '"');
-      console.error(error);
-      throw error;
-    }
-    if (!instances.hasOwnProperty(name)) {
-      try {
-        instances[name] = new providers[name](di);
-      }
-      catch(error) {
+    if (provider) {
+      if (instances.hasOwnProperty(name)) {
+        error = new Error('Cannot override instantiated service "' + name + '"');
         console.error(error);
         throw error;
       }
+      if (typeof provider != 'function') {
+        console.error('Provider "' + name + '" is not a function');
+        return;
+      }
+      if (providers.hasOwnProperty(name)) {
+        baseProvider = providers[name];
+        providers[name] = function(di) {
+          return new provider(di, new baseProvider(di));
+        };
+      }
+      else {
+        providers[name] = provider;
+      }
     }
-    return instances[name];
+    else {
+      if (!providers[name]) {
+        error = new Error('Cannot found service provider "' + name + '"');
+        console.error(error);
+        throw error;
+      }
+      if (!instances.hasOwnProperty(name)) {
+        try {
+          instances[name] = new providers[name](injector);
+        }
+        catch(error) {
+          console.error(error);
+          throw error;
+        }
+      }
+      return instances[name];
+    }
+  }
+
+  injector.has = function(name) {
+    return providers.hasOwnProperty(name);
+  };
+
+  injector('ready', function(injector) {
+    return function(fn) {
+      if (typeof fn == 'function') {
+        fn(injector);
+      }
+      else if (fn) {
+        console.error('Ready listener not a function');
+      }
+    }
+  });
+
+  if (fn) {
+    if (typeof fn == 'function') {
+      fn(injector);
+    }
+    else {
+      console.error('Injector initializer not a function');
+    }
+  }
+
+  (ready.listeners || []).forEach(function(listener) {
+    listener(injector);
+  });
+
+  return injector;
+}
+'use strict';
+
+function di(name, provider) {
+  var
+    baseProvider,
+    providers;
+
+  providers = di.providers = di.providers || {};
+
+  if (typeof provider != 'function') {
+    console.error('Provider "' + name + '" is not a function');
+    return;
+  }
+  if (providers.hasOwnProperty(name)) {
+    baseProvider = providers[name];
+    providers[name] = function(di) {
+      return new provider(di, new baseProvider(di));
+    };
+  }
+  else {
+    providers[name] = provider;
   }
 }
 
 
 'use strict';
 
-di('iconManager', function(di) {
+di('iconManager', function(injector) {
 
   var
     CHECK_URL_REGEX = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/i,
@@ -300,22 +356,22 @@ di('iconManager', function(di) {
 
     addSvgIcon: function(id, urlConfig, options) {
       var
-        SvgIconScope = di('SvgIconScope');
+        SvgIconScope = injector('SvgIconScope');
       this._getSingleIconsCollection().add(new SvgIconScope(id, urlConfig, options));
       return this;
     },
 
     addImageIcon: function(id, urlConfig, options) {
       var
-        ImageIconScope = di('ImageIconScope');
+        ImageIconScope = injector('ImageIconScope');
       this._getSingleIconsCollection().add(new ImageIconScope(id, urlConfig, options));
       return this;
     },
 
     addSvgIconSet: function(id, urlConfig, options) {
       var
-        SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
-        SvgIconSetScope = di('SvgIconSetScope'),
+        SvgCumulativeIconSetScope = injector('SvgCumulativeIconSetScope'),
+        SvgIconSetScope = injector('SvgIconSetScope'),
         ScopeConstructor;
 
       options = options || {};
@@ -331,14 +387,14 @@ di('iconManager', function(di) {
 
     addFontIconSet: function(id, cssClassConfig, options) {
       var
-        FontIconSetScope = di('FontIconSetScope');
+        FontIconSetScope = injector('FontIconSetScope');
       this._getCollection(id).add(new FontIconSetScope(id, cssClassConfig, options));
       return this;
     },
 
     addSpriteIconSet: function(id, cssClassConfig, options) {
       var
-        SpriteIconSetScope = di('SpriteIconSetScope');
+        SpriteIconSetScope = injector('SpriteIconSetScope');
       this._getCollection(id).add(new SpriteIconSetScope(id, cssClassConfig, options));
       return this;
     },
@@ -445,7 +501,7 @@ di('iconManager', function(di) {
 
     _getCollection: function(id) {
       var
-        ScopeCollection = di('ScopeCollection');
+        ScopeCollection = injector('ScopeCollection');
       if (!this._collections.hasOwnProperty(id)) {
         this._collections[id] = new ScopeCollection();
       }
@@ -461,8 +517,8 @@ di('iconManager', function(di) {
 
   function announceIconNotFound(iconId, iconSetId) {
     var
-      log = di('log'),
-      Promise = di('Promise'),
+      log = injector('log'),
+      Promise = injector('Promise'),
       errorMessage = 'icon "' + iconId + '" not found';
 
     if (iconSetId) {
@@ -488,7 +544,7 @@ di('iconManager', function(di) {
 
 'use strict';
 
-di('inherit', function() {
+di('inherit', function(injector) {
 
   return function inherit(Constructor, Parent, methods, properties) {
     Constructor.prototype = Object.create(Parent.prototype, properties || {});
@@ -503,7 +559,7 @@ di('inherit', function() {
 });
 'use strict';
 
-di('initIconElement', function() {
+di('initIconElement', function(injector) {
 
   return function initIconElement(element, alt, icon) {
     var
@@ -613,14 +669,14 @@ di('initIconElement', function() {
 });
 'use strict';
 
-di('loadSvgByUrl', function(di) {
+di('loadSvgByUrl', function(injector) {
 
   return function loadSvgByUrl(urlConfig) {
     var
-      httpGet = di('httpGet'),
-      log = di('log'),
-      Promise = di('Promise'),
-      el = di('nodeWrapper'),
+      httpGet = injector('httpGet'),
+      log = injector('log'),
+      Promise = injector('Promise'),
+      el = injector('nodeWrapper'),
       url = urlConfig,
       params = null
       ;
@@ -654,7 +710,7 @@ di('loadSvgByUrl', function(di) {
 
 'use strict';
 
-di('parseSvgOptions', function() {
+di('parseSvgOptions', function(injector) {
 
   return function parseSvgOptions(options) {
     if (options) {
@@ -684,9 +740,10 @@ di('parseSvgOptions', function() {
 });
 'use strict';
 
-di('publicApi', function(di) {
+di('publicApi', function(injector) {
   var 
-    iconManager = di('iconManager'),
+    iconManager = injector('iconManager'),
+    ready = injector('ready'),
     api;
 
   api = {
@@ -735,7 +792,9 @@ di('publicApi', function(di) {
     preload: function() {
       iconManager.preload();
       return this;
-    }
+    },
+
+    extension: ready
 
   };
 
@@ -752,37 +811,48 @@ di('publicApi', function(di) {
 
 function ready(fn) {
   var
-    functions;
+    listeners;
 
-  functions = ready.functions = ready.functions || [];
+  listeners = ready.listeners = ready.listeners || [];
 
-  if (fn) {
-    functions.push(fn);
+  if (typeof fn == 'function') {
+    listeners.push(fn);
   }
-  else {
-    functions.forEach(function(fn) {
-      fn(di);
-    });
+  else if (fn) {
+    console.error('Ready listener not a function');
   }
+
 }
 
 'use strict';
 
-ready(function(di) {
+ready(function(injector) {
   var
-    nodeWrapper = di('nodeWrapper');
+    nodeWrapper = injector('nodeWrapper'),
+    head,
+    styleEl,
+    styleContent;
 
-  nodeWrapper(window.document).find('head').prepend(
-    '<style type="text/css">@charset "UTF-8";i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon{display:inline-block}.i8-svg-icon svg{fill:currentColor}</style>'
-  );
+  styleContent = '<style type="text/css">@charset "UTF-8";i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon{display:inline-block;}.i8-svg-icon svg{fill:currentColor;}</style>';
+
+  head = nodeWrapper(window.document).find('head');
+  styleEl = head.find('style')[0];
+
+  if (styleEl) {
+    if (styleEl.outerHTML == styleContent) {
+      return;
+    }
+  }
+
+  head.prepend(styleContent);
 
 });
 'use strict';
 
-di('AbstractCssClassIcon', function() {
+di('AbstractCssClassIcon', function(injector) {
   var
-    AbstractIcon = di('AbstractIcon'),
-    inherit = di('inherit')
+    AbstractIcon = injector('AbstractIcon'),
+    inherit = injector('inherit')
     ;
 
   function AbstractCssClassIcon(iconClassName, className) {
@@ -830,10 +900,10 @@ di('AbstractCssClassIcon', function() {
 });
 'use strict';
 
-di('AbstractElementIcon', function() {
+di('AbstractElementIcon', function(injector) {
   var
-    AbstractIcon = di('AbstractIcon'),
-    inherit = di('inherit')
+    AbstractIcon = injector('AbstractIcon'),
+    inherit = injector('inherit')
     ;
 
   function AbstractElementIcon(iconClassName, element) {
@@ -867,7 +937,7 @@ di('AbstractElementIcon', function() {
 });
 'use strict';
 
-di('AbstractIcon', function() {
+di('AbstractIcon', function(injector) {
 
   function AbstractIcon(iconClassName) {
     this.iconClassName = iconClassName;
@@ -892,10 +962,10 @@ di('AbstractIcon', function() {
 });
 'use strict';
 
-di('FontIcon', function() {
+di('FontIcon', function(injector) {
   var
-    AbstractCssClassIcon = di('AbstractCssClassIcon'),
-    inherit = di('inherit')
+    AbstractCssClassIcon = injector('AbstractCssClassIcon'),
+    inherit = injector('inherit')
     ;
 
   function FontIcon(className) {
@@ -910,10 +980,10 @@ di('FontIcon', function() {
 });
 'use strict';
 
-di('ImageIcon', function(di) {
+di('ImageIcon', function(injector) {
   var
-    AbstractElementIcon = di('AbstractElementIcon'),
-    inherit = di('inherit')
+    AbstractElementIcon = injector('AbstractElementIcon'),
+    inherit = injector('inherit')
     ;
 
   function ImageIcon(element) {
@@ -935,9 +1005,9 @@ di('ImageIcon', function(di) {
 
   ImageIcon.loadByUrl = function(urlConfig) {
     var
-      buildUrlParams = di('buildUrlParams'),
-      nodeWrapper = di('nodeWrapper'),
-      Promise = di('Promise'),
+      buildUrlParams = injector('buildUrlParams'),
+      nodeWrapper = injector('nodeWrapper'),
+      Promise = injector('Promise'),
       url = urlConfig,
       query,
       element
@@ -967,10 +1037,10 @@ di('ImageIcon', function(di) {
 });
 'use strict';
 
-di('SpriteIcon', function() {
+di('SpriteIcon', function(injector) {
   var
-    AbstractCssClassIcon = di('AbstractCssClassIcon'),
-    inherit = di('inherit')
+    AbstractCssClassIcon = injector('AbstractCssClassIcon'),
+    inherit = injector('inherit')
     ;
 
   function SpriteIcon(className) {
@@ -985,18 +1055,18 @@ di('SpriteIcon', function() {
 });
 'use strict';
 
-di('SvgIcon', function(di) {
+di('SvgIcon', function(injector) {
   var
-    AbstractElementIcon = di('AbstractElementIcon'),
-    inherit = di('inherit')
+    AbstractElementIcon = injector('AbstractElementIcon'),
+    inherit = injector('inherit')
     ;
 
   function SvgIcon(element, options) {
     var
       SVG_ICON_CLASS = 'i8-svg-icon',
-      nodeWrapper = di('nodeWrapper'),
-      iconManager = di('iconManager'),
-      parseSvgOptions = di('parseSvgOptions'),
+      nodeWrapper = injector('nodeWrapper'),
+      iconManager = injector('iconManager'),
+      parseSvgOptions = injector('parseSvgOptions'),
       svgElement,
       svgNode,
       attributes,
@@ -1076,7 +1146,7 @@ di('SvgIcon', function(di) {
 
   SvgIcon.loadByUrl = function(url, options) {
     var
-      loadSvgByUrl = di('loadSvgByUrl');
+      loadSvgByUrl = injector('loadSvgByUrl');
 
     return loadSvgByUrl(url)
       .then(function(element) {
@@ -1093,10 +1163,10 @@ di('SvgIcon', function(di) {
 
 'use strict';
 
-di('AbstractCssClassIconSetScope', function(di) {
+di('AbstractCssClassIconSetScope', function(injector) {
   var
-    AbstractScope = di('AbstractScope'),
-    inherit = di('inherit')
+    AbstractScope = injector('AbstractScope'),
+    inherit = injector('inherit')
     ;
 
   function AbstractCssClassIconSetScope(id, cssClassResolver, options) {
@@ -1130,10 +1200,10 @@ di('AbstractCssClassIconSetScope', function(di) {
 });
 'use strict';
 
-di('AbstractRemoteResourceScope', function(di) {
+di('AbstractRemoteResourceScope', function(injector) {
   var
-    AbstractScope = di('AbstractScope'),
-    inherit = di('inherit')
+    AbstractScope = injector('AbstractScope'),
+    inherit = injector('inherit')
   ;
 
   function AbstractRemoteResourceScope(id, urlConfig, options) {
@@ -1180,7 +1250,7 @@ di('AbstractRemoteResourceScope', function(di) {
 
     _loadResource: function() {
       var
-        Promise = di('Promise');
+        Promise = injector('Promise');
       return Promise.reject();
     }
 
@@ -1188,7 +1258,7 @@ di('AbstractRemoteResourceScope', function(di) {
 
   function parseUrlResolver(urlConfig) {
     var
-      mergeObjects = di('mergeObjects'),
+      mergeObjects = injector('mergeObjects'),
       url,
       urlFn,
       params = null;
@@ -1234,11 +1304,11 @@ di('AbstractRemoteResourceScope', function(di) {
 });
 'use strict';
 
-di('AbstractRemoteSvgResourceScope', function(di) {
+di('AbstractRemoteSvgResourceScope', function(injector) {
   var
-    AbstractRemoteResourceScope = di('AbstractRemoteResourceScope'),
-    inherit = di('inherit'),
-    parseSvgOptions = di('parseSvgOptions')
+    AbstractRemoteResourceScope = injector('AbstractRemoteResourceScope'),
+    inherit = injector('inherit'),
+    parseSvgOptions = injector('parseSvgOptions')
   ;
 
   function AbstractRemoteSvgResourceScope(id, urlConfig, options) {
@@ -1259,7 +1329,7 @@ di('AbstractRemoteSvgResourceScope', function(di) {
 });
 'use strict';
 
-di('AbstractScope', function() {
+di('AbstractScope', function(injector) {
 
   function AbstractScope(id, options) {
     options = options && typeof options == 'object'
@@ -1306,10 +1376,10 @@ di('AbstractScope', function() {
 });
 'use strict';
 
-di('FontIconSetScope', function(di) {
+di('FontIconSetScope', function(injector) {
   var
-    AbstractCssClassIconSetScope = di('AbstractCssClassIconSetScope'),
-    inherit = di('inherit')
+    AbstractCssClassIconSetScope = injector('AbstractCssClassIconSetScope'),
+    inherit = injector('inherit')
     ;
 
   function FontIconSetScope(id, cssClassResolver, options) {
@@ -1320,7 +1390,7 @@ di('FontIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        FontIcon = di('FontIcon');
+        FontIcon = injector('FontIcon');
       return new FontIcon(this._resolveCssClass(this._parseIconId(iconId, params), params));
     }
 
@@ -1329,10 +1399,10 @@ di('FontIconSetScope', function(di) {
 });
 'use strict';
 
-di('ImageIconScope', function(di) {
+di('ImageIconScope', function(injector) {
   var
-    AbstractRemoteResourceScope = di('AbstractRemoteResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteResourceScope = injector('AbstractRemoteResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function ImageIconScope(id, urlConfig, options) {
@@ -1343,7 +1413,7 @@ di('ImageIconScope', function(di) {
 
     _loadResource: function() {
       var
-        ImageIcon = di('ImageIcon');
+        ImageIcon = injector('ImageIcon');
       return ImageIcon.loadByUrl(this._resolveUrl());
     },
 
@@ -1360,10 +1430,10 @@ di('ImageIconScope', function(di) {
 });
 'use strict';
 
-di('SpriteIconSetScope', function(di) {
+di('SpriteIconSetScope', function(injector) {
   var
-    AbstractCssClassIconSetScope = di('AbstractCssClassIconSetScope'),
-    inherit = di('inherit')
+    AbstractCssClassIconSetScope = injector('AbstractCssClassIconSetScope'),
+    inherit = injector('inherit')
     ;
 
   function SpriteIconSetScope(id, classResolver, options) {
@@ -1374,7 +1444,7 @@ di('SpriteIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        SpriteIcon = di('SpriteIcon');
+        SpriteIcon = injector('SpriteIcon');
       return new SpriteIcon(this._resolveCssClass(this._parseIconId(iconId, params), params));
     }
 
@@ -1383,10 +1453,10 @@ di('SpriteIconSetScope', function(di) {
 });
 'use strict';
 
-di('SvgCumulativeIconSetScope', function(di) {
+di('SvgCumulativeIconSetScope', function(injector) {
   var
-    AbstractRemoteSvgResourceScope = di('AbstractRemoteSvgResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteSvgResourceScope = injector('AbstractRemoteSvgResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function SvgCumulativeIconSetScope(id, urlConfig, options) {
@@ -1404,7 +1474,7 @@ di('SvgCumulativeIconSetScope', function(di) {
 
     _loadResource: function() {
       var
-        SvgIconSet = di('SvgIconSet');
+        SvgIconSet = injector('SvgIconSet');
       return SvgIconSet.loadByUrl(this._resolveUrl(this.waitIconIds), this.options);
     },
 
@@ -1414,8 +1484,8 @@ di('SvgCumulativeIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        Promise = di('Promise'),
-        timeout = di('timeout'),
+        Promise = injector('Promise'),
+        timeout = injector('timeout'),
         self = this;
 
       iconId = this._parseIconId(iconId, params);
@@ -1458,10 +1528,10 @@ di('SvgCumulativeIconSetScope', function(di) {
 });
 'use strict';
 
-di('SvgIconScope', function(di) {
+di('SvgIconScope', function(injector) {
   var
-    AbstractRemoteSvgResourceScope = di('AbstractRemoteSvgResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteSvgResourceScope = injector('AbstractRemoteSvgResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function SvgIconScope(id, urlConfig, options) {
@@ -1472,7 +1542,7 @@ di('SvgIconScope', function(di) {
 
     _loadResource: function() {
       var
-        SvgIcon = di('SvgIcon');
+        SvgIcon = injector('SvgIcon');
       return SvgIcon.loadByUrl(this._resolveUrl(), this.options);
     },
 
@@ -1489,10 +1559,10 @@ di('SvgIconScope', function(di) {
 });
 'use strict';
 
-di('SvgIconSetScope', function(di) {
+di('SvgIconSetScope', function(injector) {
   var
-    AbstractRemoteSvgResourceScope = di('AbstractRemoteSvgResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteSvgResourceScope = injector('AbstractRemoteSvgResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function SvgIconSetScope(id, urlConfig, options) {
@@ -1503,7 +1573,7 @@ di('SvgIconSetScope', function(di) {
 
     _loadResource: function() {
       var
-        SvgIconSet = di('SvgIconSet');
+        SvgIconSet = injector('SvgIconSet');
       return SvgIconSet.loadByUrl(this._resolveUrl(), this.options);
     },
 
@@ -1518,7 +1588,7 @@ di('SvgIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        Promise = di('Promise');
+        Promise = injector('Promise');
 
       iconId = this._parseIconId(iconId, params);
       return this._getResource()
@@ -1536,103 +1606,120 @@ di('SvgIconSetScope', function(di) {
 });
 'use strict';
 
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
+di('IconDirective', function(injector) {
 
-  iconManager
-    .addFontIconSet(
-      'fa',
-      function(name, params) {
+  /**
+   * @ngdoc directive
+   * @name i8Icon
+   * @module i8.icon
+   *
+   * @restrict EA
+   *
+   * @description
+   */
+
+  function IconDirective($i8Icon) {
+    return {
+      restrict: 'EA',
+      scope: true,
+      link: function (scope, element, attrs) {
         var
-          classBuilder = [
-            'fa',
-            'fa-' + name
-          ];
-        params = params || [];
-        Array.prototype.push.apply(
-          classBuilder,
-          params.map(function(param) {
-            return 'fa-'+param
-          })
-        );
-        return classBuilder.join(' ')
+          initIconElement = injector('initIconElement'),
+          altAttrName = attrs.$normalize(attrs.$attr.alt || ''),
+          alt,
+          attrName =  attrs.$normalize(attrs.$attr.icon || attrs.$attr.i8Icon || ''),
+          cleaner = null
+          ;
+
+        alt = altAttrName
+          ? attrs[altAttrName]
+          : null;
+
+        initIconElement(element, alt, attrs[attrName]);
+
+        if (attrName) {
+          attrs.$observe(attrName, function(icon) {
+            cleaner && cleaner();
+            cleaner = null;
+            if (icon) {
+              $i8Icon(icon).then(function(icon) {
+                cleaner = icon.render(element);
+              });
+            }
+          });
+        }
+
       }
-    );
+    };
+  }
+
+  IconDirective.$inject = [
+    '$i8Icon'
+  ];
+
+  return IconDirective;
 
 });
 
+
+
 'use strict';
 
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
+di('IconProvider', function(injector) {
 
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
+  /**
+   * @ngdoc service
+   * @name $i8IconProvider
+   * @module i8.icon
+   *
+   * @description
+   *
+   */
 
+  function IconProvider() {
+    var
+      lazyPreload = false;
+
+    this.preload = function() {
+      lazyPreload = true;
+      return this;
+    };
+
+    this.$get = ['$injector', function($injector) {
+      var
+        iconManager = injector('iconManager'),
+        ensureDependenciesRegistered = injector('ensureDependenciesRegistered'),
+        iconService;
+
+      ensureDependenciesRegistered($injector);
+
+      iconService = function(id) {
+        return iconManager.getIcon(id);
+      };
+      iconService.preload = function() {
+        iconManager.preload();
+      };
+
+      iconService.$checkLazyPreload = function() {
+        if (lazyPreload) {
+          this.preload();
+        }
+      };
+
+      return iconService;
+    }];
+
+  }
+
+  IconProvider.prototype = injector('publicApi');
+
+  return IconProvider;
 });
-'use strict';
 
-di('materialDesignIconsConfig', function() {
-  return {
-    version: '1.0.1',
-    categories: [
-      'action',
-      'alert',
-      'av',
-      'communication',
-      'content',
-      'device',
-      'editor',
-      'file',
-      'hardware',
-      'image',
-      'maps',
-      'navigation',
-      'notification',
-      'social',
-      'toggle'
-    ]
-  };
-});
 
 'use strict';
 
-ready(function(di) {
-  var
-    iconManager = di('iconManager'),
-    config = di('materialDesignIconsConfig'),
-    iconIdFilter,
-    options;
-
-  iconIdFilter = function(id) {
-    return String(id || '')
-      .replace(/_/g, '-')
-      .replace(/^ic-/, '')
-      .replace(/-\d+px$/, '');
-  };
-
-  options = {
-    iconIdResolver: iconIdFilter,
-    iconIdParser: iconIdFilter,
-    preloadable: false
-  };
-
-  config.categories
-    .forEach(function(category) {
-      iconManager.addSvgIconSet(
-        'md-' + category,
-        '//cdn.rawgit.com/google/material-design-icons/' + config.version + '/sprites/svg-sprite/svg-sprite-' + category + '.svg',
-        options
-      )
-    });
-
-});
-'use strict';
-
-di('buildUrlParams', function() {
+di('buildUrlParams', function(injector) {
 
   return function buildUrlParams(params) {
     var
@@ -1660,7 +1747,7 @@ di('buildUrlParams', function() {
 });
 'use strict';
 
-di('ensureDependenciesRegistered', function(di) {
+di('ensureDependenciesRegistered', function(injector) {
   var
     registered = false;
 
@@ -1669,11 +1756,15 @@ di('ensureDependenciesRegistered', function(di) {
       return;
     }
 
-    di('log', function() {
+    injector('$injector', function() {
+      return $injector;
+    });
+
+    injector('log', function() {
       return $injector.get('$log');
     });
 
-    di('httpGet', function() {
+    injector('httpGet', function() {
       var
         $http = $injector.get('$http'),
         $templateCache = $injector.get('$templateCache')
@@ -1691,7 +1782,7 @@ di('ensureDependenciesRegistered', function(di) {
       }
     });
 
-    di('Promise', function() {
+    injector('Promise', function() {
       var
         $q = $injector.get('$q'),
         $rootScope = $injector.get('$rootScope');
@@ -1733,7 +1824,7 @@ di('ensureDependenciesRegistered', function(di) {
       return Promise;
     });
 
-    di('timeout', function() {
+    injector('timeout', function() {
       var
         $timeout = $injector.get('$timeout');
 
@@ -1795,112 +1886,11 @@ di('mergeObjects', function() {
 
 'use strict';
 
-di('nodeWrapper', function() {
+di('nodeWrapper', function(injector) {
+  var
+    angular = injector('angular');
   return angular.element;
 });
-'use strict';
-
-
-/**
- * @ngdoc directive
- * @name i8Icon
- * @module i8.icon
- *
- * @restrict EA
- *
- * @description
- */
-
-function IconDirective($i8Icon) {
-  return {
-    restrict: 'EA',
-    scope: true,
-    link: function (scope, element, attrs) {
-      var
-        initIconElement = di('initIconElement'),
-        altAttrName = attrs.$normalize(attrs.$attr.alt || ''),
-        alt,
-        attrName =  attrs.$normalize(attrs.$attr.icon || attrs.$attr.i8Icon || ''),
-        cleaner = null
-        ;
-
-      alt = altAttrName
-        ? attrs[altAttrName]
-        : null;
-
-      initIconElement(element, alt, attrs[attrName]);
-
-      if (attrName) {
-        attrs.$observe(attrName, function(icon) {
-          cleaner && cleaner();
-          cleaner = null;
-          if (icon) {
-            $i8Icon(icon).then(function(icon) {
-              cleaner = icon.render(element);
-            });
-          }
-        });
-      }
-
-    }
-  };
-}
-
-IconDirective.$inject = [
-  '$i8Icon'
-];
-
-
-'use strict';
-
-
-/**
- * @ngdoc service
- * @name $i8IconProvider
- * @module i8.icon
- *
- * @description
- *
- */
-
-function IconProvider() {
-  var
-    lazyPreload = false;
-
-  this.preload = function() {
-    lazyPreload = true;
-    return this;
-  };
-
-  this.$get = ['$injector', function($injector) {
-    var
-      iconManager = di('iconManager'),
-      ensureDependenciesRegistered = di('ensureDependenciesRegistered'),
-      iconService;
-
-    ensureDependenciesRegistered($injector);
-
-    iconService = function(id) {
-      return iconManager.getIcon(id);
-    };
-    iconService.preload = function() {
-      iconManager.preload();
-    };
-
-    iconService.$checkLazyPreload = function() {
-      if (lazyPreload) {
-        this.preload();
-      }
-    };
-
-    return iconService;
-  }];
-
-}
-
-IconProvider.prototype = di('publicApi');
-
-
 'use strict';
 
 /**
@@ -1909,12 +1899,22 @@ IconProvider.prototype = di('publicApi');
  * @description
  * Icon
  */
-angular.module('i8.icon', [])
-  .provider('$i8Icon', IconProvider)
-  .directive('i8Icon', IconDirective)
-;
 
-angular.module('i8.icon')
+angular.module('i8.icon', [])
+  .config([
+    '$provide',
+    '$compileProvider',
+    function($provide, $compileProvider) {
+      var
+        injector = createInjector(function(injector) {
+          injector('angular', function() {
+            return angular;
+          })
+        });
+      $provide.provider('$i8Icon', injector('IconProvider'));
+      $compileProvider.directive('i8Icon', injector('IconDirective'));
+    }
+  ])
   .run([
     '$i8Icon',
     function($i8Icon) {
@@ -1922,7 +1922,5 @@ angular.module('i8.icon')
     }
   ])
 ;
-
-ready();
 
 })(window, window.angular);

@@ -2,10 +2,10 @@
 
 'use strict';
 
-di('AbstractCssClassIcon', function() {
+di('AbstractCssClassIcon', function(injector) {
   var
-    AbstractIcon = di('AbstractIcon'),
-    inherit = di('inherit')
+    AbstractIcon = injector('AbstractIcon'),
+    inherit = injector('inherit')
     ;
 
   function AbstractCssClassIcon(iconClassName, className) {
@@ -53,10 +53,10 @@ di('AbstractCssClassIcon', function() {
 });
 'use strict';
 
-di('AbstractElementIcon', function() {
+di('AbstractElementIcon', function(injector) {
   var
-    AbstractIcon = di('AbstractIcon'),
-    inherit = di('inherit')
+    AbstractIcon = injector('AbstractIcon'),
+    inherit = injector('inherit')
     ;
 
   function AbstractElementIcon(iconClassName, element) {
@@ -90,7 +90,7 @@ di('AbstractElementIcon', function() {
 });
 'use strict';
 
-di('AbstractIcon', function() {
+di('AbstractIcon', function(injector) {
 
   function AbstractIcon(iconClassName) {
     this.iconClassName = iconClassName;
@@ -115,10 +115,10 @@ di('AbstractIcon', function() {
 });
 'use strict';
 
-di('FontIcon', function() {
+di('FontIcon', function(injector) {
   var
-    AbstractCssClassIcon = di('AbstractCssClassIcon'),
-    inherit = di('inherit')
+    AbstractCssClassIcon = injector('AbstractCssClassIcon'),
+    inherit = injector('inherit')
     ;
 
   function FontIcon(className) {
@@ -133,10 +133,10 @@ di('FontIcon', function() {
 });
 'use strict';
 
-di('ImageIcon', function(di) {
+di('ImageIcon', function(injector) {
   var
-    AbstractElementIcon = di('AbstractElementIcon'),
-    inherit = di('inherit')
+    AbstractElementIcon = injector('AbstractElementIcon'),
+    inherit = injector('inherit')
     ;
 
   function ImageIcon(element) {
@@ -158,9 +158,9 @@ di('ImageIcon', function(di) {
 
   ImageIcon.loadByUrl = function(urlConfig) {
     var
-      buildUrlParams = di('buildUrlParams'),
-      nodeWrapper = di('nodeWrapper'),
-      Promise = di('Promise'),
+      buildUrlParams = injector('buildUrlParams'),
+      nodeWrapper = injector('nodeWrapper'),
+      Promise = injector('Promise'),
       url = urlConfig,
       query,
       element
@@ -190,10 +190,10 @@ di('ImageIcon', function(di) {
 });
 'use strict';
 
-di('SpriteIcon', function() {
+di('SpriteIcon', function(injector) {
   var
-    AbstractCssClassIcon = di('AbstractCssClassIcon'),
-    inherit = di('inherit')
+    AbstractCssClassIcon = injector('AbstractCssClassIcon'),
+    inherit = injector('inherit')
     ;
 
   function SpriteIcon(className) {
@@ -208,18 +208,18 @@ di('SpriteIcon', function() {
 });
 'use strict';
 
-di('SvgIcon', function(di) {
+di('SvgIcon', function(injector) {
   var
-    AbstractElementIcon = di('AbstractElementIcon'),
-    inherit = di('inherit')
+    AbstractElementIcon = injector('AbstractElementIcon'),
+    inherit = injector('inherit')
     ;
 
   function SvgIcon(element, options) {
     var
       SVG_ICON_CLASS = 'i8-svg-icon',
-      nodeWrapper = di('nodeWrapper'),
-      iconManager = di('iconManager'),
-      parseSvgOptions = di('parseSvgOptions'),
+      nodeWrapper = injector('nodeWrapper'),
+      iconManager = injector('iconManager'),
+      parseSvgOptions = injector('parseSvgOptions'),
       svgElement,
       svgNode,
       attributes,
@@ -299,7 +299,7 @@ di('SvgIcon', function(di) {
 
   SvgIcon.loadByUrl = function(url, options) {
     var
-      loadSvgByUrl = di('loadSvgByUrl');
+      loadSvgByUrl = injector('loadSvgByUrl');
 
     return loadSvgByUrl(url)
       .then(function(element) {
@@ -316,10 +316,10 @@ di('SvgIcon', function(di) {
 
 'use strict';
 
-di('AbstractCssClassIconSetScope', function(di) {
+di('AbstractCssClassIconSetScope', function(injector) {
   var
-    AbstractScope = di('AbstractScope'),
-    inherit = di('inherit')
+    AbstractScope = injector('AbstractScope'),
+    inherit = injector('inherit')
     ;
 
   function AbstractCssClassIconSetScope(id, cssClassResolver, options) {
@@ -353,10 +353,10 @@ di('AbstractCssClassIconSetScope', function(di) {
 });
 'use strict';
 
-di('AbstractRemoteResourceScope', function(di) {
+di('AbstractRemoteResourceScope', function(injector) {
   var
-    AbstractScope = di('AbstractScope'),
-    inherit = di('inherit')
+    AbstractScope = injector('AbstractScope'),
+    inherit = injector('inherit')
   ;
 
   function AbstractRemoteResourceScope(id, urlConfig, options) {
@@ -403,7 +403,7 @@ di('AbstractRemoteResourceScope', function(di) {
 
     _loadResource: function() {
       var
-        Promise = di('Promise');
+        Promise = injector('Promise');
       return Promise.reject();
     }
 
@@ -411,7 +411,7 @@ di('AbstractRemoteResourceScope', function(di) {
 
   function parseUrlResolver(urlConfig) {
     var
-      mergeObjects = di('mergeObjects'),
+      mergeObjects = injector('mergeObjects'),
       url,
       urlFn,
       params = null;
@@ -457,11 +457,11 @@ di('AbstractRemoteResourceScope', function(di) {
 });
 'use strict';
 
-di('AbstractRemoteSvgResourceScope', function(di) {
+di('AbstractRemoteSvgResourceScope', function(injector) {
   var
-    AbstractRemoteResourceScope = di('AbstractRemoteResourceScope'),
-    inherit = di('inherit'),
-    parseSvgOptions = di('parseSvgOptions')
+    AbstractRemoteResourceScope = injector('AbstractRemoteResourceScope'),
+    inherit = injector('inherit'),
+    parseSvgOptions = injector('parseSvgOptions')
   ;
 
   function AbstractRemoteSvgResourceScope(id, urlConfig, options) {
@@ -482,7 +482,7 @@ di('AbstractRemoteSvgResourceScope', function(di) {
 });
 'use strict';
 
-di('AbstractScope', function() {
+di('AbstractScope', function(injector) {
 
   function AbstractScope(id, options) {
     options = options && typeof options == 'object'
@@ -529,10 +529,10 @@ di('AbstractScope', function() {
 });
 'use strict';
 
-di('FontIconSetScope', function(di) {
+di('FontIconSetScope', function(injector) {
   var
-    AbstractCssClassIconSetScope = di('AbstractCssClassIconSetScope'),
-    inherit = di('inherit')
+    AbstractCssClassIconSetScope = injector('AbstractCssClassIconSetScope'),
+    inherit = injector('inherit')
     ;
 
   function FontIconSetScope(id, cssClassResolver, options) {
@@ -543,7 +543,7 @@ di('FontIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        FontIcon = di('FontIcon');
+        FontIcon = injector('FontIcon');
       return new FontIcon(this._resolveCssClass(this._parseIconId(iconId, params), params));
     }
 
@@ -552,10 +552,10 @@ di('FontIconSetScope', function(di) {
 });
 'use strict';
 
-di('ImageIconScope', function(di) {
+di('ImageIconScope', function(injector) {
   var
-    AbstractRemoteResourceScope = di('AbstractRemoteResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteResourceScope = injector('AbstractRemoteResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function ImageIconScope(id, urlConfig, options) {
@@ -566,7 +566,7 @@ di('ImageIconScope', function(di) {
 
     _loadResource: function() {
       var
-        ImageIcon = di('ImageIcon');
+        ImageIcon = injector('ImageIcon');
       return ImageIcon.loadByUrl(this._resolveUrl());
     },
 
@@ -583,10 +583,10 @@ di('ImageIconScope', function(di) {
 });
 'use strict';
 
-di('SpriteIconSetScope', function(di) {
+di('SpriteIconSetScope', function(injector) {
   var
-    AbstractCssClassIconSetScope = di('AbstractCssClassIconSetScope'),
-    inherit = di('inherit')
+    AbstractCssClassIconSetScope = injector('AbstractCssClassIconSetScope'),
+    inherit = injector('inherit')
     ;
 
   function SpriteIconSetScope(id, classResolver, options) {
@@ -597,7 +597,7 @@ di('SpriteIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        SpriteIcon = di('SpriteIcon');
+        SpriteIcon = injector('SpriteIcon');
       return new SpriteIcon(this._resolveCssClass(this._parseIconId(iconId, params), params));
     }
 
@@ -606,10 +606,10 @@ di('SpriteIconSetScope', function(di) {
 });
 'use strict';
 
-di('SvgCumulativeIconSetScope', function(di) {
+di('SvgCumulativeIconSetScope', function(injector) {
   var
-    AbstractRemoteSvgResourceScope = di('AbstractRemoteSvgResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteSvgResourceScope = injector('AbstractRemoteSvgResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function SvgCumulativeIconSetScope(id, urlConfig, options) {
@@ -627,7 +627,7 @@ di('SvgCumulativeIconSetScope', function(di) {
 
     _loadResource: function() {
       var
-        SvgIconSet = di('SvgIconSet');
+        SvgIconSet = injector('SvgIconSet');
       return SvgIconSet.loadByUrl(this._resolveUrl(this.waitIconIds), this.options);
     },
 
@@ -637,8 +637,8 @@ di('SvgCumulativeIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        Promise = di('Promise'),
-        timeout = di('timeout'),
+        Promise = injector('Promise'),
+        timeout = injector('timeout'),
         self = this;
 
       iconId = this._parseIconId(iconId, params);
@@ -681,10 +681,10 @@ di('SvgCumulativeIconSetScope', function(di) {
 });
 'use strict';
 
-di('SvgIconScope', function(di) {
+di('SvgIconScope', function(injector) {
   var
-    AbstractRemoteSvgResourceScope = di('AbstractRemoteSvgResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteSvgResourceScope = injector('AbstractRemoteSvgResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function SvgIconScope(id, urlConfig, options) {
@@ -695,7 +695,7 @@ di('SvgIconScope', function(di) {
 
     _loadResource: function() {
       var
-        SvgIcon = di('SvgIcon');
+        SvgIcon = injector('SvgIcon');
       return SvgIcon.loadByUrl(this._resolveUrl(), this.options);
     },
 
@@ -712,10 +712,10 @@ di('SvgIconScope', function(di) {
 });
 'use strict';
 
-di('SvgIconSetScope', function(di) {
+di('SvgIconSetScope', function(injector) {
   var
-    AbstractRemoteSvgResourceScope = di('AbstractRemoteSvgResourceScope'),
-    inherit = di('inherit')
+    AbstractRemoteSvgResourceScope = injector('AbstractRemoteSvgResourceScope'),
+    inherit = injector('inherit')
     ;
 
   function SvgIconSetScope(id, urlConfig, options) {
@@ -726,7 +726,7 @@ di('SvgIconSetScope', function(di) {
 
     _loadResource: function() {
       var
-        SvgIconSet = di('SvgIconSet');
+        SvgIconSet = injector('SvgIconSet');
       return SvgIconSet.loadByUrl(this._resolveUrl(), this.options);
     },
 
@@ -741,7 +741,7 @@ di('SvgIconSetScope', function(di) {
 
     getIcon: function(iconId, params) {
       var
-        Promise = di('Promise');
+        Promise = injector('Promise');
 
       iconId = this._parseIconId(iconId, params);
       return this._getResource()
@@ -759,7 +759,7 @@ di('SvgIconSetScope', function(di) {
 });
 'use strict';
 
-di('ScopeCollection', function(di) {
+di('ScopeCollection', function(injector) {
 
   function ScopeCollection() {
     this.collection = [];
@@ -769,8 +769,8 @@ di('ScopeCollection', function(di) {
 
     add: function(scope) {
       var
-        SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
-        FontIconSetScope = di('FontIconSetScope');
+        SvgCumulativeIconSetScope = injector('SvgCumulativeIconSetScope'),
+        FontIconSetScope = injector('FontIconSetScope');
 
       if (scope instanceof SvgCumulativeIconSetScope || scope instanceof FontIconSetScope) {
         this.collection.push(scope);
@@ -782,7 +782,7 @@ di('ScopeCollection', function(di) {
 
     preload: function() {
       var
-        Promise = di('Promise');
+        Promise = injector('Promise');
 
       return Promise.all(
         this.collection.map(function(item) {
@@ -801,8 +801,8 @@ di('ScopeCollection', function(di) {
 
     getIconScope: function(iconId, params) {
       var
-        Promise = di('Promise'),
-        SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
+        Promise = injector('Promise'),
+        SvgCumulativeIconSetScope = injector('SvgCumulativeIconSetScope'),
         collection = this.collection,
         promise
         ;
@@ -846,14 +846,14 @@ di('ScopeCollection', function(di) {
 });
 'use strict';
 
-di('SvgIconSet', function(di) {
+di('SvgIconSet', function(injector) {
 
   function SvgIconSet(element, options) {
     var
-      log = di('log'),
-      parseSvgOptions = di('parseSvgOptions'),
-      SvgIcon = di('SvgIcon'),
-      nodeWrapper = di('nodeWrapper'),
+      log = injector('log'),
+      parseSvgOptions = injector('parseSvgOptions'),
+      SvgIcon = injector('SvgIcon'),
+      nodeWrapper = injector('nodeWrapper'),
       index,
       nodes,
       node,
@@ -879,7 +879,7 @@ di('SvgIconSet', function(di) {
       nodes = element[0].querySelectorAll('[id]');
       for(index = 0; index < nodes.length; index++) {
         node = nodes[index];
-        this.icons[iconIdResolver(node.getAttribute('id'))] = new SvgIcon(nodeWrapper(node), {
+        this.icons[iconIdResolver(node.getAttribute('id'))] = new SvgIcon(nodeWrapper(node.cloneNode(true)), {
           iconSize: iconSize,
           viewBox: viewBox
         });
@@ -895,7 +895,7 @@ di('SvgIconSet', function(di) {
 
   SvgIconSet.loadByUrl = function(url, options) {
     var
-      loadSvgByUrl = di('loadSvgByUrl');
+      loadSvgByUrl = injector('loadSvgByUrl');
 
     return loadSvgByUrl(url)
       .then(function(element) {
@@ -958,61 +958,117 @@ di('SvgIconSet', function(di) {
 
 'use strict';
 
-function di(name, provider) {
+function createInjector(fn) {
   var
-    error,
-    baseProvider,
-    providers,
-    instances;
+    providers = {},
+    instances = {};
 
-  providers = di.providers = di.providers || {};
-  instances = di.instaces = di.instaces || {};
+  Object.keys(di.providers).forEach(function(name) {
+    providers[name] = di.providers[name];
+  });
 
-  if (provider) {
-    if (instances.hasOwnProperty(name)) {
-      error = new Error('Cannot override instantiated service "' + name + '"');
-      console.error(error);
-      throw error;
-    }
-    if (!(provider instanceof Function)) {
-      error = new Error('Incorrect provider function "' + name + '"');
-      console.error(error);
-      throw error;
-    }
+  function injector(name, provider) {
+    var
+      error,
+      baseProvider;
 
-    if (providers.hasOwnProperty(name)) {
-      baseProvider = providers[name];
-      providers[name] = function(di) {
-        return new provider(di, new baseProvider(di));
-      };
-    }
-    else {
-      providers[name] = provider;
-    }
-  }
-  else {
-    if (!providers[name]) {
-      error = new Error('Cannot found service provider "' + name + '"');
-      console.error(error);
-      throw error;
-    }
-    if (!instances.hasOwnProperty(name)) {
-      try {
-        instances[name] = new providers[name](di);
-      }
-      catch(error) {
+    if (provider) {
+      if (instances.hasOwnProperty(name)) {
+        error = new Error('Cannot override instantiated service "' + name + '"');
         console.error(error);
         throw error;
       }
+      if (typeof provider != 'function') {
+        console.error('Provider "' + name + '" is not a function');
+        return;
+      }
+      if (providers.hasOwnProperty(name)) {
+        baseProvider = providers[name];
+        providers[name] = function(di) {
+          return new provider(di, new baseProvider(di));
+        };
+      }
+      else {
+        providers[name] = provider;
+      }
     }
-    return instances[name];
+    else {
+      if (!providers[name]) {
+        error = new Error('Cannot found service provider "' + name + '"');
+        console.error(error);
+        throw error;
+      }
+      if (!instances.hasOwnProperty(name)) {
+        try {
+          instances[name] = new providers[name](injector);
+        }
+        catch(error) {
+          console.error(error);
+          throw error;
+        }
+      }
+      return instances[name];
+    }
+  }
+
+  injector.has = function(name) {
+    return providers.hasOwnProperty(name);
+  };
+
+  injector('ready', function(injector) {
+    return function(fn) {
+      if (typeof fn == 'function') {
+        fn(injector);
+      }
+      else if (fn) {
+        console.error('Ready listener not a function');
+      }
+    }
+  });
+
+  if (fn) {
+    if (typeof fn == 'function') {
+      fn(injector);
+    }
+    else {
+      console.error('Injector initializer not a function');
+    }
+  }
+
+  (ready.listeners || []).forEach(function(listener) {
+    listener(injector);
+  });
+
+  return injector;
+}
+'use strict';
+
+function di(name, provider) {
+  var
+    baseProvider,
+    providers;
+
+  providers = di.providers = di.providers || {};
+
+  if (typeof provider != 'function') {
+    console.error('Provider "' + name + '" is not a function');
+    return;
+  }
+  if (providers.hasOwnProperty(name)) {
+    baseProvider = providers[name];
+    providers[name] = function(di) {
+      return new provider(di, new baseProvider(di));
+    };
+  }
+  else {
+    providers[name] = provider;
   }
 }
 
 
 'use strict';
 
-di('iconManager', function(di) {
+di('iconManager', function(injector) {
 
   var
     CHECK_URL_REGEX = /[-a-zA-Z0-9@:%_\+.~#?&//=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?/i,
@@ -1057,22 +1113,22 @@ di('iconManager', function(di) {
 
     addSvgIcon: function(id, urlConfig, options) {
       var
-        SvgIconScope = di('SvgIconScope');
+        SvgIconScope = injector('SvgIconScope');
       this._getSingleIconsCollection().add(new SvgIconScope(id, urlConfig, options));
       return this;
     },
 
     addImageIcon: function(id, urlConfig, options) {
       var
-        ImageIconScope = di('ImageIconScope');
+        ImageIconScope = injector('ImageIconScope');
       this._getSingleIconsCollection().add(new ImageIconScope(id, urlConfig, options));
       return this;
     },
 
     addSvgIconSet: function(id, urlConfig, options) {
       var
-        SvgCumulativeIconSetScope = di('SvgCumulativeIconSetScope'),
-        SvgIconSetScope = di('SvgIconSetScope'),
+        SvgCumulativeIconSetScope = injector('SvgCumulativeIconSetScope'),
+        SvgIconSetScope = injector('SvgIconSetScope'),
         ScopeConstructor;
 
       options = options || {};
@@ -1088,14 +1144,14 @@ di('iconManager', function(di) {
 
     addFontIconSet: function(id, cssClassConfig, options) {
       var
-        FontIconSetScope = di('FontIconSetScope');
+        FontIconSetScope = injector('FontIconSetScope');
       this._getCollection(id).add(new FontIconSetScope(id, cssClassConfig, options));
       return this;
     },
 
     addSpriteIconSet: function(id, cssClassConfig, options) {
       var
-        SpriteIconSetScope = di('SpriteIconSetScope');
+        SpriteIconSetScope = injector('SpriteIconSetScope');
       this._getCollection(id).add(new SpriteIconSetScope(id, cssClassConfig, options));
       return this;
     },
@@ -1202,7 +1258,7 @@ di('iconManager', function(di) {
 
     _getCollection: function(id) {
       var
-        ScopeCollection = di('ScopeCollection');
+        ScopeCollection = injector('ScopeCollection');
       if (!this._collections.hasOwnProperty(id)) {
         this._collections[id] = new ScopeCollection();
       }
@@ -1218,8 +1274,8 @@ di('iconManager', function(di) {
 
   function announceIconNotFound(iconId, iconSetId) {
     var
-      log = di('log'),
-      Promise = di('Promise'),
+      log = injector('log'),
+      Promise = injector('Promise'),
       errorMessage = 'icon "' + iconId + '" not found';
 
     if (iconSetId) {
@@ -1245,7 +1301,7 @@ di('iconManager', function(di) {
 
 'use strict';
 
-di('inherit', function() {
+di('inherit', function(injector) {
 
   return function inherit(Constructor, Parent, methods, properties) {
     Constructor.prototype = Object.create(Parent.prototype, properties || {});
@@ -1260,7 +1316,7 @@ di('inherit', function() {
 });
 'use strict';
 
-di('initIconElement', function() {
+di('initIconElement', function(injector) {
 
   return function initIconElement(element, alt, icon) {
     var
@@ -1370,14 +1426,14 @@ di('initIconElement', function() {
 });
 'use strict';
 
-di('loadSvgByUrl', function(di) {
+di('loadSvgByUrl', function(injector) {
 
   return function loadSvgByUrl(urlConfig) {
     var
-      httpGet = di('httpGet'),
-      log = di('log'),
-      Promise = di('Promise'),
-      el = di('nodeWrapper'),
+      httpGet = injector('httpGet'),
+      log = injector('log'),
+      Promise = injector('Promise'),
+      el = injector('nodeWrapper'),
       url = urlConfig,
       params = null
       ;
@@ -1411,7 +1467,7 @@ di('loadSvgByUrl', function(di) {
 
 'use strict';
 
-di('parseSvgOptions', function() {
+di('parseSvgOptions', function(injector) {
 
   return function parseSvgOptions(options) {
     if (options) {
@@ -1441,9 +1497,10 @@ di('parseSvgOptions', function() {
 });
 'use strict';
 
-di('publicApi', function(di) {
+di('publicApi', function(injector) {
   var 
-    iconManager = di('iconManager'),
+    iconManager = injector('iconManager'),
+    ready = injector('ready'),
     api;
 
   api = {
@@ -1492,7 +1549,9 @@ di('publicApi', function(di) {
     preload: function() {
       iconManager.preload();
       return this;
-    }
+    },
+
+    extension: ready
 
   };
 
@@ -1509,130 +1568,262 @@ di('publicApi', function(di) {
 
 function ready(fn) {
   var
-    functions;
+    listeners;
 
-  functions = ready.functions = ready.functions || [];
+  listeners = ready.listeners = ready.listeners || [];
 
-  if (fn) {
-    functions.push(fn);
+  if (typeof fn == 'function') {
+    listeners.push(fn);
   }
-  else {
-    functions.forEach(function(fn) {
-      fn(di);
-    });
+  else if (fn) {
+    console.error('Ready listener not a function');
   }
+
 }
 
 'use strict';
 
-ready(function(di) {
+ready(function(injector) {
   var
-    nodeWrapper = di('nodeWrapper');
+    nodeWrapper = injector('nodeWrapper'),
+    head,
+    styleEl,
+    styleContent;
 
-  nodeWrapper(window.document).find('head').prepend(
-    '<style type="text/css">@charset "UTF-8";i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon{display:inline-block}.i8-svg-icon svg{fill:currentColor}</style>'
-  );
+  styleContent = '<style type="text/css">@charset "UTF-8";i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon{display:inline-block;}.i8-svg-icon svg{fill:currentColor;}</style>';
+
+  head = nodeWrapper(window.document).find('head');
+  styleEl = head.find('style')[0];
+
+  if (styleEl) {
+    if (styleEl.outerHTML == styleContent) {
+      return;
+    }
+  }
+
+  head.prepend(styleContent);
 
 });
 'use strict';
 
-ready(function(di) {
-  var
-    iconManager = di('iconManager');
+di('IconController', function(injector) {
 
-  iconManager
-    .addFontIconSet(
-      'fa',
-      function(name, params) {
-        var
-          classBuilder = [
-            'fa',
-            'fa-' + name
-          ];
-        params = params || [];
-        Array.prototype.push.apply(
-          classBuilder,
-          params.map(function(param) {
-            return 'fa-'+param
-          })
-        );
-        return classBuilder.join(' ')
+  function IconController(element, options) {
+    var
+      initIconElement = injector('initIconElement');
+
+    options = options || {};
+    this._element = element;
+    this.options = options;
+
+    initIconElement(element, this._getAlt(), this._getIconId());
+    this._renderIcon();
+  }
+
+  IconController.prototype = {
+
+    _getAlt: function() {
+      var
+        element = this._element,
+        altAttr = element.attr('alt'),
+        altData = element.data('alt');
+
+      if (altAttr === '' || altData === '' || this.options.alt === '') {
+        return '';
       }
+      return altAttr || altData || this.options.alt;
+    },
+
+    _getIconId: function() {
+      var
+        element = this._element,
+        index,
+        prefixes,
+        prefix,
+        id = null;
+
+      prefixes = ['', 'i8-', 'i8', 'i8:'];
+      for (index = 0; !id && index < prefixes.length; index++) {
+        prefix = prefixes[index];
+        id = element.attr(prefix + 'icon') || element.data(prefix + 'icon');
+      }
+
+      if (!id) {
+        id = element
+          .attr('class')
+          .split(/\s+/)
+          .map(function(className) {
+            var
+              match,
+              parts;
+            match = /^i8[-:]?icon[-:]([^;|,]+)[;|,]?(.*)$/i.exec(className);
+            if (!match || !match[1]) {
+              return null;
+            }
+            parts = [match[1]];
+            if (match[2]) {
+              Array.prototype.push.apply(parts, match[2].split(/[;|,:]/));
+            }
+            return parts.join(' ');
+          })
+          .filter(function(iconId) {
+            return iconId;
+          })
+          [0];
+      }
+
+      return id || this.options.icon;
+    },
+
+    _renderIcon: function(iconId) {
+      var
+        iconManager = injector('iconManager'),
+        element = this._element,
+        cleaner = this._renderedIconCleaner,
+        self = this;
+
+      iconId = iconId || this._getIconId();
+
+      if (iconId == this._renderedIconId) {
+        return;
+      }
+
+      cleaner && cleaner();
+      this._renderedIconCleaner = null;
+      if (iconId) {
+        iconManager.getIcon(iconId).then(function(icon) {
+          self._renderedIconCleaner = icon.render(element);
+        });
+      }
+
+      this._renderedIconId = iconId;
+    },
+
+    refresh: function(options) {
+      var
+        iconId;
+
+      iconId = this.options.icon;
+      this.options = options;
+      this.options.icon = this.options.icon || iconId;
+
+      this._renderIcon();
+    }
+
+  };
+
+  return IconController;
+
+});
+
+
+
+
+'use strict';
+
+di('IconPlugin', function(injector) {
+  var
+    jQuery = injector('jQuery');
+
+  return function(config) {
+    var
+      configPerformer = injector('configPerformer'),
+      IconController = injector('IconController'),
+      IconsPlugin = injector('IconsPlugin');
+
+    config = config || {};
+
+    if (typeof config == 'string') {
+      config = {
+        icon: config
+      };
+    }
+
+    configPerformer(config);
+
+    if (!IconsPlugin.bootstraped) {
+      IconsPlugin.cancelBootstrap();
+    }
+
+    return this.each(function() {
+      var
+        I8_ICON_DATA_KEY = '__I8_ICON_DATA',
+        element = jQuery(this),
+        instance = element.data(I8_ICON_DATA_KEY),
+        options = {
+          icon: config.icon + ''
+        };
+
+      if (instance) {
+        instance.refresh(options);
+      }
+      else {
+        element.data(I8_ICON_DATA_KEY, new IconController(element, options));
+      }
+    });
+  }
+
+});
+
+
+
+
+'use strict';
+
+di('IconsPlugin', function(injector) {
+
+  function IconsPlugin(options) {
+    var
+      configPerformer = injector('configPerformer'),
+      elements = this,
+      selector = 'i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon',
+      optionsApplied = false;
+
+    if (elements.is(selector)) {
+      elements.i8icon(options);
+      optionsApplied = true;
+    }
+    elements.find(selector).i8icon(
+      optionsApplied
+        ? null
+        : options
     );
 
+    if (!IconsPlugin.bootstraped) {
+      if (!optionsApplied) {
+        configPerformer(options);
+      }
+      IconsPlugin.setBootstrapped();
+    }
+
+    return elements;
+  }
+
+  IconsPlugin.bootstraped = false;
+
+  IconsPlugin.cancelBootstrap = function() {
+    IconsPlugin.bootstraped = true;
+  };
+
+  IconsPlugin.isBootstrapped = function() {
+    return IconsPlugin.bootstraped;
+  };
+
+  IconsPlugin.setBootstrapped = function(value) {
+    IconsPlugin.bootstraped = typeof value == 'undefined'
+      ? true
+      : value;
+  };
+
+  return IconsPlugin;
+
 });
 
 'use strict';
 
-ready(function(di) {
+di('Promise', function(injector) {
   var
-    iconManager = di('iconManager');
-
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
-'use strict';
-
-di('materialDesignIconsConfig', function() {
-  return {
-    version: '1.0.1',
-    categories: [
-      'action',
-      'alert',
-      'av',
-      'communication',
-      'content',
-      'device',
-      'editor',
-      'file',
-      'hardware',
-      'image',
-      'maps',
-      'navigation',
-      'notification',
-      'social',
-      'toggle'
-    ]
-  };
-});
-
-'use strict';
-
-ready(function(di) {
-  var
-    iconManager = di('iconManager'),
-    config = di('materialDesignIconsConfig'),
-    iconIdFilter,
-    options;
-
-  iconIdFilter = function(id) {
-    return String(id || '')
-      .replace(/_/g, '-')
-      .replace(/^ic-/, '')
-      .replace(/-\d+px$/, '');
-  };
-
-  options = {
-    iconIdResolver: iconIdFilter,
-    iconIdParser: iconIdFilter,
-    preloadable: false
-  };
-
-  config.categories
-    .forEach(function(category) {
-      iconManager.addSvgIconSet(
-        'md-' + category,
-        '//cdn.rawgit.com/google/material-design-icons/' + config.version + '/sprites/svg-sprite/svg-sprite-' + category + '.svg',
-        options
-      )
-    });
-
-});
-'use strict';
-
-di('Promise', function() {
+    jQuery = injector('jQuery');
 
   if (window.Promise) {
     return window.Promise;
@@ -1737,357 +1928,208 @@ di('Promise', function() {
 
 'use strict';
 
-di('buildUrlParams', function(di) {
+ready(function bootstrap(injector) {
+  var
+    jQuery = injector('jQuery');
 
+  jQuery(function() {
+    var
+      BOOTSTRAP_DELAY = 5,
+      timeout = injector('timeout');
+
+    if (IconsPlugin.bootstraped) {
+      return;
+    }
+
+    timeout(BOOTSTRAP_DELAY).then(function() {
+      if (IconsPlugin.bootstraped) {
+        return;
+      }
+      jQuery(window.document).i8icons();
+    });
+
+  });
+
+});
+
+'use strict';
+
+di('buildUrlParams', function(injector) {
   return function buildUrlParams(params) {
+    var
+      jQuery = injector('jQuery');
     return jQuery.param(params || {});
   }
 
 });
 'use strict';
 
-di('httpGet', function(di) {
-
-  var cache = {};
-
-  return function httpGet(url, params) {
-    var
-      Promise = di('Promise'),
-      buildUrlParams = di('buildUrlParams'),
-      urlBuilder = [url],
-      compiledUrl,
-      query,
-      promise
-      ;
-
-    params = params || {};
-    query = buildUrlParams(params);
-    if (query) {
-      urlBuilder.push(query);
-    }
-    compiledUrl = urlBuilder.join('?');
-
-    if (cache.hasOwnProperty(compiledUrl)) {
-      return cache[compiledUrl];
-    }
-
-    cache[compiledUrl] = promise = new Promise(function(resolve, reject) {
-      jQuery.ajax({
-        url: url,
-        data: params,
-        dataType: 'text',
-        success: function(data) {
-          resolve({
-            data: data
-          });
-        },
-        error: reject
-      })
-      ;
-    });
-
-    return promise;
-  }
-
-});
-
-'use strict';
-
-di('log', function() {
+di('configPerformBaseStrategy', function(injector) {
   var
-    noop = function() {},
-    log = {},
-    logDebug = getConsoleWriteDelegate('debug');
+    publicApi = injector('publicApi'),
+    iconManager = injector('iconManager')
+  ;
 
-  ['log', 'info', 'warn', 'error'].forEach(function(type) {
-    log[type] = getConsoleWriteDelegate(type);
-  });
+  return function configPerformBaseStrategy(config) {
+    var
+      parsedConfig,
+      addConfig,
+      addConfigDecorator,
+      configStrategies,
+      iconSetsExistenceMap = {};
 
-  log.debug = function() {
-    if (!log.debugEnabled) {
-      return noop;
-    }
-    return logDebug.apply(null, Array.prototype.slice.call(arguments));
-  };
-
-  return log;
-
-  function getConsoleWriteDelegate(type) {
-    return function() {
-      var
-        console = window.console;
-
-      if (console) {
-        console[type].apply(console, Array.prototype.slice.call(arguments));
+    parsedConfig = {};
+    addConfig = function(entity, config) {
+      if (!parsedConfig[entity]) {
+        parsedConfig[entity] = {};
       }
-    }
-  }
-
-
-
-});
-
-
-'use strict';
-
-di('mergeObjects', function() {
-
-  return function mergeObjects(/* to, from [, from[, ...]]*/) {
-    var
-      args = Array.prototype.slice.call(arguments);
-
-    switch(args.length) {
-      case 0: args.push({});
-      case 1: args.push({});
-    }
-
-    return jQuery.extend.apply(jQuery, [true].concat(args));
-  }
-
-});
-
-
-'use strict';
-
-di('nodeWrapper', function() {
-  return jQuery;
-});
-'use strict';
-
-di('timeout', function(di) {
-
-  function timeout(fn, delay) {
-    var
-      Promise = di('Promise'),
-      promise,
-      resolve;
-
-    if (typeof fn != 'function') {
-      delay = fn;
-      fn = function() {};
-    }
-
-    promise = new Promise(function(resolveFn) {
-      resolve = resolveFn;
-    });
-    promise.then(fn);
-    promise._timeoutId = setTimeout(resolve, delay);
-
-    return promise;
-  }
-
-  timeout.cancel = function(timeoutPromise) {
-    if (timeoutPromise._timeoutId) {
-      clearTimeout(timeoutPromise._timeoutId);
-    }
-  };
-
-  return timeout;
-
-});
-
-
-'use strict';
-
-function IconPlugin(config) {
-  config = config || {};
-
-  if (typeof config == 'string') {
-    config = {
-      icon: config
+      if (!parsedConfig[entity][config.id]) {
+        parsedConfig[entity][config.id] = [];
+      }
+      parsedConfig[entity][config.id].push(config);
     };
-  }
 
-  IconPlugin._applyConfig(config);
-
-  if (!IconsPlugin.bootstraped) {
-    IconsPlugin.cancelBootstrap();
-  }
-
-  return this.each(function() {
-    var
-      I8_ICON_DATA_KEY = '__I8_ICON_DATA',
-      element = jQuery(this),
-      instance = element.data(I8_ICON_DATA_KEY),
-      options = {
-        icon: config.icon + ''
-      };
-
-    if (instance) {
-      instance.refresh(options);
-    }
-    else {
-      element.data(I8_ICON_DATA_KEY, new IconController(element, options));
-    }
-  });
-}
-
-IconPlugin._applyConfig = function(config) {
-  var
-    publicApi = di('publicApi'),
-    iconManager = di('iconManager'),
-    parsedConfig,
-    addConfig,
-    addConfigDecorator,
-    configStrategies,
-    iconSetsExistenceMap = {};
-
-  if (typeof config == 'function') {
-    config = config(publicApi);
-  }
-  config = config || {};
-
-  parsedConfig = {};
-  addConfig = function(entity, config) {
-    if (!parsedConfig[entity]) {
-      parsedConfig[entity] = {};
-    }
-    if (!parsedConfig[entity][config.id]) {
-      parsedConfig[entity][config.id] = [];
-    }
-    parsedConfig[entity][config.id].push(config);
-  };
-
-  addConfigDecorator = function(entity) {
-    return function(config) {
-      addConfig(entity, config);
-    }
-  };
-
-  parseConfigs(
-    config.icons,
-    config.icon,
-    parseUrlConfig).forEach(addConfigDecorator('icon'));
-
-  parseConfigs(
-    config.svgSets,
-    config.svgSet,
-    config.iconSets,
-    config.iconSet,
-    parseUrlConfig).forEach(addConfigDecorator('svgSet'));
-
-  parseConfigs(
-    config.fonts,
-    config.font,
-    parseCssClassConfig).forEach(addConfigDecorator('font'));
-
-  parseConfigs(
-    config.sprites,
-    config.sprite,
-    parseCssClassConfig).forEach(addConfigDecorator('sprite'));
-
-  ['svgSet', 'font', 'sprite'].forEach(function(entity) {
-    Object.keys(parsedConfig[entity] || {}).forEach(function(id) {
-      if (!iconSetsExistenceMap.hasOwnProperty(id)) {
-        iconSetsExistenceMap[id] = iconManager.hasIconSet(id);
+    addConfigDecorator = function(entity) {
+      return function(config) {
+        addConfig(entity, config);
       }
+    };
+
+    parseConfigs(
+      config.icons,
+      config.icon,
+      parseUrlConfig).forEach(addConfigDecorator('icon'));
+
+    parseConfigs(
+      config.svgSets,
+      config.svgSet,
+      config.iconSets,
+      config.iconSet,
+      parseUrlConfig).forEach(addConfigDecorator('svgSet'));
+
+    parseConfigs(
+      config.fonts,
+      config.font,
+      parseCssClassConfig).forEach(addConfigDecorator('font'));
+
+    parseConfigs(
+      config.sprites,
+      config.sprite,
+      parseCssClassConfig).forEach(addConfigDecorator('sprite'));
+
+    ['svgSet', 'font', 'sprite'].forEach(function(entity) {
+      Object.keys(parsedConfig[entity] || {}).forEach(function(id) {
+        if (!iconSetsExistenceMap.hasOwnProperty(id)) {
+          iconSetsExistenceMap[id] = iconManager.hasIconSet(id);
+        }
+      });
     });
-  });
 
-  configStrategies = {
-    icon: function(entity, config) {
-      if (!iconManager.hasSingleIcon(config.id)) {
-        parseSvgIconSizeConfig(config);
-        publicApi.icon(config.id, config.url, config);
+    configStrategies = {
+      icon: function(entity, config) {
+        if (!iconManager.hasSingleIcon(config.id)) {
+          parseSvgIconSizeConfig(config);
+          publicApi.icon(config.id, config.url, config);
+        }
+      },
+      svgSet: function(entity, config) {
+        if (!iconSetsExistenceMap[config.id]) {
+          parseSvgIconSizeConfig(config);
+          publicApi.svgSet(config.id, config.url, config);
+          if (config.default || config.defaultSource) {
+            publicApi.defaultSource(config.id);
+          }
+        }
       }
-    },
-    svgSet: function(entity, config) {
+    };
+    configStrategies.font = configStrategies.sprite = function(entity, config) {
       if (!iconSetsExistenceMap[config.id]) {
-        parseSvgIconSizeConfig(config);
-        publicApi.svgSet(config.id, config.url, config);
+        publicApi[entity](config.id, config.className, config);
         if (config.default || config.defaultSource) {
           publicApi.defaultSource(config.id);
         }
       }
-    }
-  };
-  configStrategies.font = configStrategies.sprite = function(entity, config) {
-    if (!iconSetsExistenceMap[config.id]) {
-      publicApi[entity](config.id, config.className, config);
-      if (config.default || config.defaultSource) {
-        publicApi.defaultSource(config.id);
-      }
-    }
-  };
+    };
 
-  Object.keys(parsedConfig).forEach(function(entity) {
-    Object.keys(parsedConfig[entity] || {}).forEach(function(id) {
-      parsedConfig[entity][id].forEach(function(config) {
-        configStrategies[entity](entity, config);
+    Object.keys(parsedConfig).forEach(function(entity) {
+      Object.keys(parsedConfig[entity] || {}).forEach(function(id) {
+        parsedConfig[entity][id].forEach(function(config) {
+          configStrategies[entity](entity, config);
+        });
       });
     });
-  });
 
-  parseConfigs(
-    config.defaultSvgSetUrl,
-    config.defaultSvgIconSetUrl,
-    config.defaultIconSetUrl,
-    function(config) {
-      if (typeof config != 'object') {
-        config = {
-          url: config
+    parseConfigs(
+      config.defaultSvgSetUrl,
+      config.defaultSvgIconSetUrl,
+      config.defaultIconSetUrl,
+      function(config) {
+        if (typeof config != 'object') {
+          config = {
+            url: config
+          }
         }
+        config.url = config.url || config.uri;
+        return config.url
+          ? config
+          : null;
       }
-      config.url = config.url || config.uri;
-      return config.url
-        ? config
-        : null;
-    }
-  ).forEach(function(config) {
-      if (!iconManager.hasIconSet(config.url)) {
-        parseSvgIconSizeConfig(config);
-        publicApi.defaultSvgSetUrl(config.url, config);
-      }
-    });
-
-  parseConfigs(
-    config.alias,
-    config.sourceAlias,
-    function(config, id) {
-      if (typeof config != 'object') {
-        config = {
-          alias: config,
-          id: id
+    ).forEach(function(config) {
+        if (!iconManager.hasIconSet(config.url)) {
+          parseSvgIconSizeConfig(config);
+          publicApi.defaultSvgSetUrl(config.url, config);
         }
-      }
-      config.alias = config.alias || config.sourceAlias;
-      return config.url
-        ? config
-        : null;
-    }
-  ).forEach(function(config) {
-      if (!iconManager.hasIconSet(config.id)) {
-        publicApi.sourceAlias(config.id, config.alias);
-      }
-    });
+      });
 
-  parseConfigs(
-    config.default,
-    config.defaultSource,
-    function(config) {
-      if (typeof config != 'object') {
-        config = {
-          id: config
+    parseConfigs(
+      config.alias,
+      config.sourceAlias,
+      function(config, id) {
+        if (typeof config != 'object') {
+          config = {
+            alias: config,
+            id: id
+          }
         }
+        config.alias = config.alias || config.sourceAlias;
+        return config.url
+          ? config
+          : null;
       }
-      return config.id
-        ? config
-        : null;
+    ).forEach(function(config) {
+        if (!iconManager.hasIconSet(config.id)) {
+          publicApi.sourceAlias(config.id, config.alias);
+        }
+      });
+
+    parseConfigs(
+      config.default,
+      config.defaultSource,
+      function(config) {
+        if (typeof config != 'object') {
+          config = {
+            id: config
+          }
+        }
+        return config.id
+          ? config
+          : null;
+      }
+    ).forEach(function(config) {
+        publicApi.defaultSource(config.id);
+      });
+
+    parseConfigs(
+      config.defaultSvgIconSize,
+      parseSvgIconSizeConfig
+    ).forEach(function(config) {
+        publicApi.defaultSvgIconSize(config.iconSize);
+      });
+
+    if (config.preload) {
+      publicApi.preload();
     }
-  ).forEach(function(config) {
-      publicApi.defaultSource(config.id);
-    });
-
-  parseConfigs(
-    config.defaultSvgIconSize,
-    parseSvgIconSizeConfig
-  ).forEach(function(config) {
-      publicApi.defaultSvgIconSize(config.iconSize);
-    });
-
-  if (config.preload) {
-    publicApi.preload();
-  }
+  };
 
 
   function parseConfigs(/*...configs, configParserFn*/) {
@@ -2112,9 +2154,9 @@ IconPlugin._applyConfig = function(config) {
       }
       else {
         configs = Array.prototype.concat.apply([], Object.keys(configs)
-          .map(function(id) {
-            return parseConfig(configs[id], id);
-          })
+            .map(function(id) {
+              return parseConfig(configs[id], id);
+            })
         );
       }
     }
@@ -2184,186 +2226,198 @@ IconPlugin._applyConfig = function(config) {
       : null;
   }
 
-};
-
-function IconController(element, options) {
-  var
-    initIconElement = di('initIconElement');
-
-  options = options || {};
-  this._element = element;
-  this.options = options;
-
-  initIconElement(element, this._getAlt(), this._getIconId());
-  this._renderIcon();
-}
-
-IconController.prototype = {
-
-  _getAlt: function() {
-    var
-      element = this._element,
-      altAttr = element.attr('alt'),
-      altData = element.data('alt');
-
-    if (altAttr === '' || altData === '' || this.options.alt === '') {
-      return '';
-    }
-    return altAttr || altData || this.options.alt;
-  },
-
-  _getIconId: function() {
-    var
-      element = this._element,
-      index,
-      prefixes,
-      prefix,
-      id = null;
-
-    prefixes = ['', 'i8-', 'i8', 'i8:'];
-    for (index = 0; !id && index < prefixes.length; index++) {
-      prefix = prefixes[index];
-      id = element.attr(prefix + 'icon') || element.data(prefix + 'icon');
-    }
-
-    if (!id) {
-      id = element
-        .attr('class')
-        .split(/\s+/)
-        .map(function(className) {
-          var
-            match,
-            parts;
-          match = /^i8[-:]?icon[-:]([^;|,]+)[;|,]?(.*)$/i.exec(className);
-          if (!match || !match[1]) {
-            return null;
-          }
-          parts = [match[1]];
-          if (match[2]) {
-            Array.prototype.push.apply(parts, match[2].split(/[;|,:]/));
-          }
-          return parts.join(' ');
-        })
-        .filter(function(iconId) {
-          return iconId;
-        })
-        [0];
-    }
-
-    return id || this.options.icon;
-  },
-
-  _renderIcon: function(iconId) {
-    var
-      iconManager = di('iconManager'),
-      element = this._element,
-      cleaner = this._renderedIconCleaner,
-      self = this;
-
-    iconId = iconId || this._getIconId();
-
-    if (iconId == this._renderedIconId) {
-      return;
-    }
-
-    cleaner && cleaner();
-    this._renderedIconCleaner = null;
-    if (iconId) {
-      iconManager.getIcon(iconId).then(function(icon) {
-        self._renderedIconCleaner = icon.render(element);
-      });
-    }
-
-    this._renderedIconId = iconId;
-  },
-
-  refresh: function(options) {
-    var
-      iconId;
-
-    iconId = this.options.icon;
-    this.options = options;
-    this.options.icon = this.options.icon || iconId;
-
-    this._renderIcon();
-  }
-
-};
+});
 'use strict';
 
-function IconsPlugin(options) {
+di('configPerformer', function(injector) {
   var
-    elements = this,
-    selector = 'i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon',
-    optionsApplied = false;
+    strategies = [
+      injector('configPerformBaseStrategy')
+    ];
 
-  if (elements.is(selector)) {
-    elements.i8icon(options);
-    optionsApplied = true;
-  }
-  elements.find(selector).i8icon(
-    optionsApplied
-      ? null
-      : options
-  );
+  function configPerformer(config) {
+    var
+      publicApi = injector('publicApi');
 
-  if (!IconsPlugin.bootstraped) {
-    if (!optionsApplied) {
-      IconPlugin._applyConfig(options);
+    if (typeof config == 'function') {
+      config = config(publicApi);
     }
-    IconsPlugin.setBootstrapped();
+    config = config || {};
+    strategies.forEach(function(strategy) {
+      strategy(config, injector);
+    });
   }
 
-  return elements;
-}
+  configPerformer.strategy = function(fn) {
+    if (typeof fn == 'function') {
+      strategies.push(fn);
+    }
+  };
 
-IconsPlugin.bootstraped = false;
+  return configPerformer;
 
-IconsPlugin.cancelBootstrap = function() {
-  IconsPlugin.bootstraped = true;
-};
-
-IconsPlugin.isBootstrapped = function() {
-  return IconsPlugin.bootstraped;
-};
-
-IconsPlugin.setBootstrapped = function(value) {
-  IconsPlugin.bootstraped = typeof value == 'undefined'
-    ? true
-    : value;
-};
-
+});
 'use strict';
 
-function bootstrap() {
+di('httpGet', function(injector) {
+  var
+    cache = {};
 
-  jQuery(function() {
+  return function httpGet(url, params) {
     var
-      BOOTSTRAP_DELAY = 5,
-      timeout = di('timeout');
+      jQuery = injector('jQuery'),
+      Promise = injector('Promise'),
+      buildUrlParams = injector('buildUrlParams'),
+      urlBuilder = [url],
+      compiledUrl,
+      query,
+      promise
+      ;
 
-    if (IconsPlugin.bootstraped) {
-      return;
+    params = params || {};
+    query = buildUrlParams(params);
+    if (query) {
+      urlBuilder.push(query);
+    }
+    compiledUrl = urlBuilder.join('?');
+
+    if (cache.hasOwnProperty(compiledUrl)) {
+      return cache[compiledUrl];
     }
 
-    timeout(BOOTSTRAP_DELAY).then(function() {
-      if (IconsPlugin.bootstraped) {
-        return;
-      }
-      jQuery(window.document).i8icons();
+    cache[compiledUrl] = promise = new Promise(function(resolve, reject) {
+      jQuery.ajax({
+        url: url,
+        data: params,
+        dataType: 'text',
+        success: function(data) {
+          resolve({
+            data: data
+          });
+        },
+        error: reject
+      })
+      ;
     });
 
-  });
+    return promise;
+  }
 
-}
+});
 
 'use strict';
 
-jQuery.fn.i8icon = IconPlugin;
-jQuery.fn.i8icons = IconsPlugin;
+di('log', function(injector) {
+  var
+    noop = function() {},
+    log = {},
+    logDebug = getConsoleWriteDelegate('debug');
 
-ready();
-bootstrap();
+  ['log', 'info', 'warn', 'error'].forEach(function(type) {
+    log[type] = getConsoleWriteDelegate(type);
+  });
+
+  log.debug = function() {
+    if (!log.debugEnabled) {
+      return noop;
+    }
+    return logDebug.apply(null, Array.prototype.slice.call(arguments));
+  };
+
+  return log;
+
+  function getConsoleWriteDelegate(type) {
+    return function() {
+      var
+        console = window.console;
+
+      if (console) {
+        console[type].apply(console, Array.prototype.slice.call(arguments));
+      }
+    }
+  }
+
+
+
+});
+
+
+'use strict';
+
+di('mergeObjects', function(injector) {
+
+  return function mergeObjects(/* to, from [, from[, ...]]*/) {
+    var
+      jQuery = injector('jQuery'),
+      args = Array.prototype.slice.call(arguments);
+
+    switch(args.length) {
+      case 0: args.push({});
+      case 1: args.push({});
+    }
+
+    return jQuery.extend.apply(jQuery, [true].concat(args));
+  }
+
+});
+
+
+'use strict';
+
+di('nodeWrapper', function(injector) {
+  var
+    jQuery = injector('jQuery');
+  return jQuery;
+});
+'use strict';
+
+di('timeout', function(injector) {
+
+  function timeout(fn, delay) {
+    var
+      Promise = injector('Promise'),
+      promise,
+      resolve;
+
+    if (typeof fn != 'function') {
+      delay = fn;
+      fn = function() {};
+    }
+
+    promise = new Promise(function(resolveFn) {
+      resolve = resolveFn;
+    });
+    promise.then(fn);
+    promise._timeoutId = setTimeout(resolve, delay);
+
+    return promise;
+  }
+
+  timeout.cancel = function(timeoutPromise) {
+    if (timeoutPromise._timeoutId) {
+      clearTimeout(timeoutPromise._timeoutId);
+    }
+  };
+
+  return timeout;
+
+});
+
+
+'use strict';
+
+var
+  injector = createInjector(function(injector) {
+    injector('jQuery', function() {
+      return jQuery;
+    })
+  });
+
+jQuery.fn.i8icon = injector('IconPlugin');
+jQuery.fn.i8icon.extension = injector('ready');
+
+jQuery.fn.i8icons = injector('IconsPlugin');
+jQuery.fn.i8icons.extension = injector('ready');
 
 
 })(window, window.jQuery);
