@@ -46,9 +46,9 @@ Simply include the scripts and stylesheet in your main HTML file, in the order s
 ```html
 <body ng-app="app">
   <i8-icon icon="fci:checkmark"></i8-icon>
-  <div i8-icon="clock"></div>
-  <i8-icon data-icon="//cdn.rawgit.com/icons8/flat-color-icons/v1.0.2/svg/search.svg"></i8-icon>
-  <span data-i8-icon="calendar"></span>
+  <i8-icon icon="clock"></i8-icon>
+  <i8-icon icon="//cdn.rawgit.com/icons8/flat-color-icons/v1.0.2/svg/search.svg"></i8-icon>
+  <i8-icon icon="calendar"></i8-icon>
   <i8-icon icon="md-action:3d-rotation" alt=""></i8-icon>
 
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.1.5/angular.js"></script>
@@ -70,11 +70,11 @@ Simply include the scripts and stylesheet in your main HTML file, in the order s
 ### Simple demo for jQuery version
 ```html
 <body>
-  <div i8-icon="fci:checkmark"></div>
-  <span i8-icon="clock"></span>
-  <div data-i8-icon="//cdn.rawgit.com/icons8/flat-color-icons/v1.0.2/svg/search.svg"></div>
-  <i8-icon icon="calendar"></i8-icon>
-  <span class="i8-icon i8-icon-md-action:3d-rotation" data-alt=""></span>
+  <div data-i8icon="fci:checkmark"></div>
+  <div data-i8icon="clock"></div>
+  <div data-i8icon="//cdn.rawgit.com/icons8/flat-color-icons/v1.0.2/svg/search.svg"></div>
+  <div data-i8icon="calendar"></div>
+  <div data-i8icon="md-action:3d-rotation" data-alt=""></div>
 
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.js"></script>
   <script type="text/javascript" src="/bower_components/i8-icon/jquery-i8-icon.js"></script>
@@ -86,7 +86,7 @@ Simply include the scripts and stylesheet in your main HTML file, in the order s
           "flat-color-icons": '//cdn.rawgit.com/icons8/flat-color-icons/v1.0.2/icon-set/icons.svg'
         },
         alias: {
-          fci: "flat-color-icons"
+          fci: 'flat-color-icons'
         },
         icon: {
           clock: '//cdn.rawgit.com/icons8/flat-color-icons/v1.0.2/svg/clock.svg'
