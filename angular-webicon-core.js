@@ -563,7 +563,7 @@ di('initIconElement', function(injector) {
 
   return function initIconElement(element, alt, icon) {
     var
-      ICON_CLASS = 'i8-icon',
+      ICON_CLASS = 'webicon',
       pieces
       ;
 
@@ -833,7 +833,7 @@ ready(function(injector) {
     styleEl,
     styleContent;
 
-  styleContent = '<style type="text/css">@charset "UTF-8";i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon{display:inline-block;}.i8-svg-icon svg{fill:currentColor;}</style>';
+  styleContent = '<style type="text/css">@charset "UTF-8";webicon,[webicon],[data-webicon],.webicon,.webicon{display:inline-block;}.svg-webicon svg{fill:currentColor;}</style>';
 
   head = nodeWrapper(window.document).find('head');
   styleEl = head.find('style')[0];
@@ -970,7 +970,7 @@ di('FontIcon', function(injector) {
 
   function FontIcon(className) {
     var
-      FONT_ICON_CLASS = 'i8-font-icon';
+      FONT_ICON_CLASS = 'font-webicon';
 
     AbstractCssClassIcon.call(this, FONT_ICON_CLASS, className);
   }
@@ -988,7 +988,7 @@ di('ImageIcon', function(injector) {
 
   function ImageIcon(element) {
     var
-      IMAGE_ICON_CLASS = 'i8-image-icon';
+      IMAGE_ICON_CLASS = 'image-webicon';
 
     element.attr({
       width: '100%',
@@ -1045,7 +1045,7 @@ di('SpriteIcon', function(injector) {
 
   function SpriteIcon(className) {
     var
-      SPRITE_ICON_CLASS = 'i8-sprite-icon';
+      SPRITE_ICON_CLASS = 'sprite-webicon';
 
     AbstractCssClassIcon.call(this, SPRITE_ICON_CLASS, className);
   }
@@ -1063,7 +1063,7 @@ di('SvgIcon', function(injector) {
 
   function SvgIcon(element, options) {
     var
-      SVG_ICON_CLASS = 'i8-svg-icon',
+      SVG_ICON_CLASS = 'svg-webicon',
       nodeWrapper = injector('nodeWrapper'),
       iconManager = injector('iconManager'),
       parseSvgOptions = injector('parseSvgOptions'),
@@ -1073,6 +1073,8 @@ di('SvgIcon', function(injector) {
       styles,
       defaultAttributes,
       index,
+      width,
+      height,
       node,
       iconSize;
 
@@ -1122,8 +1124,17 @@ di('SvgIcon', function(injector) {
       height: '100%',
       width: '100%',
       preserveAspectRatio: 'xMidYMid meet',
-      viewBox: node.getAttribute('viewBox') || options.viewBox || ('0 0 ' + iconSize + ' ' + iconSize)
+      viewBox: node.getAttribute('viewBox') || options.viewBox
     };
+
+    if (!attributes.viewBox) {
+      width = node.getAttribute('width');
+      height = node.getAttribute('height');
+      if (width !== null && height !== null ) {
+        attributes.viewBox = '0 0 ' + parseFloat(width) + ' ' + parseFloat(height);
+      }
+    }
+    attributes.viewBox = attributes.viewBox || '0 0 ' + iconSize + ' ' + iconSize;
 
     Object.keys(attributes)
       .forEach(function(name) {
@@ -1610,15 +1621,15 @@ di('IconDirective', function(injector) {
 
   /**
    * @ngdoc directive
-   * @name i8Icon
-   * @module i8.icon
+   * @name webicon
+   * @module webicon
    *
    * @restrict EA
    *
    * @description
    */
 
-  function IconDirective($i8Icon) {
+  function IconDirective($webicon) {
     return {
       restrict: 'EA',
       scope: true,
@@ -1627,7 +1638,7 @@ di('IconDirective', function(injector) {
           initIconElement = injector('initIconElement'),
           altAttrName = attrs.$normalize(attrs.$attr.alt || ''),
           alt,
-          attrName =  attrs.$normalize(attrs.$attr.icon || attrs.$attr.i8Icon || ''),
+          attrName =  attrs.$normalize(attrs.$attr.icon || attrs.$attr.webicon || ''),
           cleaner = null
           ;
 
@@ -1642,7 +1653,7 @@ di('IconDirective', function(injector) {
             cleaner && cleaner();
             cleaner = null;
             if (icon) {
-              $i8Icon(icon).then(function(icon) {
+              $webicon(icon).then(function(icon) {
                 cleaner = icon.render(element);
               });
             }
@@ -1654,7 +1665,7 @@ di('IconDirective', function(injector) {
   }
 
   IconDirective.$inject = [
-    '$i8Icon'
+    '$webicon'
   ];
 
   return IconDirective;
@@ -1669,8 +1680,8 @@ di('IconProvider', function(injector) {
 
   /**
    * @ngdoc service
-   * @name $i8IconProvider
-   * @module i8.icon
+   * @name $webiconProvider
+   * @module webicon
    *
    * @description
    *
@@ -1893,224 +1904,14 @@ di('nodeWrapper', function(injector) {
 });
 'use strict';
 
-var
-  i8ApiConfig = {
-    gateway: {
-      url: '//api.icons8.com/api/iconsets/svg-symbol'
-    }
-  };
-
-
-'use strict';
-
-function i8ApiExtension(injector, config) {
-  var
-    publicApi = injector('publicApi'),
-    iconManager = injector('iconManager'),
-    platforms = {
-      ios8: ['ios', 'ios7', 'i'],
-      win8: ['win', 'w'],
-      android: ['kitkat', 'ak', 'a-k', 'k'],
-      androidL: ['android-l', 'al', 'a-l', 'l'],
-      flat_color: ['color', 'c', 'colored']
-    },
-    platformsMap,
-    apiToken;
-
-  platformsMap = {};
-  Object.keys(platforms).forEach(function(platform) {
-    platformsMap[platform.toLowerCase()] = platform;
-    platforms[platform].forEach(function(alias) {
-      platformsMap[alias] = platform;
-    });
-  });
-
-  iconManager
-    .setDefaultIconSet('i8')
-    .addSvgIconSet(
-    'i8',
-    function(icons) {
-      var
-        options = {
-          url: config.gateway.url,
-          params: {}
-        };
-
-      if (icons) {
-        if (!Array.isArray(icons)) {
-          icons = [icons];
-        }
-        options.params.icons = icons.join(',');
-      }
-      if (apiToken) {
-        options.params.token = apiToken;
-      }
-      return options;
-    },
-    {
-      cumulative: true,
-      iconIdParser: function(id, params) {
-        var
-          index;
-        id = String(id || '');
-        if (!Array.isArray(params)) {
-          params = [];
-        }
-        params = params.map(function(param) {
-          return String(param).toLowerCase();
-        });
-        for (index = 0; index < params.length; index++) {
-          if (platformsMap.hasOwnProperty(params[index])) {
-            return [platformsMap[params[index]], id].join('-');
-          }
-        }
-
-        return [platformsMap['c'], id].join('-');
-      }
-    }
-  );
-
-  publicApi.i8ApiToken = function(token) {
-    apiToken = token;
-  };
-
-  if (injector.has('configPerformer')) {
-    injector('configPerformer').strategy(function(config) {
-      if (typeof config.i8ApiToken != 'undefined') {
-        publicApi.i8ApiToken(config.i8ApiToken);
-      }
-    });
-  }
-
-}
-
-
-'use strict';
-
-var
-  materialDesignIconsConfig = {
-    version: '1.0.1',
-    categories: [
-      'action',
-      'alert',
-      'av',
-      'communication',
-      'content',
-      'device',
-      'editor',
-      'file',
-      'hardware',
-      'image',
-      'maps',
-      'navigation',
-      'notification',
-      'social',
-      'toggle'
-    ]
-  };
-
-
-'use strict';
-
-function materialDesignIconsExtension(di, config) {
-  var
-    iconManager = di('iconManager'),
-    iconIdFilter,
-    options;
-
-  iconIdFilter = function(id) {
-    return String(id || '')
-      .replace(/_/g, '-')
-      .replace(/^ic-/, '')
-      .replace(/-\d+px$/, '');
-  };
-
-  options = {
-    iconIdResolver: iconIdFilter,
-    iconIdParser: iconIdFilter,
-    preloadable: false
-  };
-
-  config.categories
-    .forEach(function(category) {
-      iconManager.addSvgIconSet(
-        'md-' + category,
-        '//cdn.rawgit.com/google/material-design-icons/' + config.version + '/sprites/svg-sprite/svg-sprite-' + category + '.svg',
-        options
-      )
-    });
-
-}
-'use strict';
-
-extension(function(injector) {
-  var
-    iconManager = injector('iconManager');
-
-  iconManager
-    .addFontIconSet(
-      'fa',
-      function(name, params) {
-        var
-          classBuilder = [
-            'fa',
-            'fa-' + name
-          ];
-        params = params || [];
-        Array.prototype.push.apply(
-          classBuilder,
-          params.map(function(param) {
-            return 'fa-'+param
-          })
-        );
-        return classBuilder.join(' ')
-      }
-    );
-
-});
-
-'use strict';
-
-extension(function(injector) {
-  var
-    iconManager = injector('iconManager');
-
-  iconManager
-    .addIconSetAlias('glyphicon', 'gi')
-    .addFontIconSet('glyphicon', 'glyphicon glyphicon-?');
-
-});
-'use strict';
-
-extension(function(injector) {
-
-  i8ApiExtension(injector, i8ApiConfig);
-
-});
-
-
-'use strict';
-
-extension(function(injector) {
-
-  materialDesignIconsExtension(injector, materialDesignIconsConfig);
-
-});
-'use strict';
-
-function extension(fn) {
-  ready(fn);
-}
-'use strict';
-
 /**
  * @ngdoc module
- * @name i8.icon
+ * @name webicon
  * @description
  * Icon
  */
 
-angular.module('i8.icon', [])
+angular.module('webicon', [])
   .config([
     '$provide',
     '$compileProvider',
@@ -2121,14 +1922,14 @@ angular.module('i8.icon', [])
             return angular;
           })
         });
-      $provide.provider('$i8Icon', injector('IconProvider'));
-      $compileProvider.directive('i8Icon', injector('IconDirective'));
+      $provide.provider('$webicon', injector('IconProvider'));
+      $compileProvider.directive('webicon', injector('IconDirective'));
     }
   ])
   .run([
-    '$i8Icon',
-    function($i8Icon) {
-      $i8Icon.$checkLazyPreload();
+    '$webicon',
+    function($webicon) {
+      $webicon.$checkLazyPreload();
     }
   ])
 ;

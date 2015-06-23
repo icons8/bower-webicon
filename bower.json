@@ -1,9 +1,9 @@
 {
-  "name": "i8-icon",
-  "version": "0.9.4",
+  "name": "webicon",
+  "version": "0.10.0",
   "main": [
-    "angular-i8-icon.js",
-    "jquery-i8-icon.js"
+    "angular-webicon.js",
+    "jquery-webicon.js"
   ],
   "ignore": [],
   "dependencies": {

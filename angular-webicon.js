@@ -563,7 +563,7 @@ di('initIconElement', function(injector) {
 
   return function initIconElement(element, alt, icon) {
     var
-      ICON_CLASS = 'i8-icon',
+      ICON_CLASS = 'webicon',
       pieces
       ;
 
@@ -833,7 +833,7 @@ ready(function(injector) {
     styleEl,
     styleContent;
 
-  styleContent = '<style type="text/css">@charset "UTF-8";i8-icon,i8icon,[i8-icon],[i8icon],[data-i8-icon],[data-i8icon],.i8icon,.i8-icon{display:inline-block;}.i8-svg-icon svg{fill:currentColor;}</style>';
+  styleContent = '<style type="text/css">@charset "UTF-8";webicon,[webicon],[data-webicon],.webicon,.webicon{display:inline-block;}.svg-webicon svg{fill:currentColor;}</style>';
 
   head = nodeWrapper(window.document).find('head');
   styleEl = head.find('style')[0];
@@ -970,7 +970,7 @@ di('FontIcon', function(injector) {
 
   function FontIcon(className) {
     var
-      FONT_ICON_CLASS = 'i8-font-icon';
+      FONT_ICON_CLASS = 'font-webicon';
 
     AbstractCssClassIcon.call(this, FONT_ICON_CLASS, className);
   }
@@ -988,7 +988,7 @@ di('ImageIcon', function(injector) {
 
   function ImageIcon(element) {
     var
-      IMAGE_ICON_CLASS = 'i8-image-icon';
+      IMAGE_ICON_CLASS = 'image-webicon';
 
     element.attr({
       width: '100%',
@@ -1045,7 +1045,7 @@ di('SpriteIcon', function(injector) {
 
   function SpriteIcon(className) {
     var
-      SPRITE_ICON_CLASS = 'i8-sprite-icon';
+      SPRITE_ICON_CLASS = 'sprite-webicon';
 
     AbstractCssClassIcon.call(this, SPRITE_ICON_CLASS, className);
   }
@@ -1063,7 +1063,7 @@ di('SvgIcon', function(injector) {
 
   function SvgIcon(element, options) {
     var
-      SVG_ICON_CLASS = 'i8-svg-icon',
+      SVG_ICON_CLASS = 'svg-webicon',
       nodeWrapper = injector('nodeWrapper'),
       iconManager = injector('iconManager'),
       parseSvgOptions = injector('parseSvgOptions'),
@@ -1073,6 +1073,8 @@ di('SvgIcon', function(injector) {
       styles,
       defaultAttributes,
       index,
+      width,
+      height,
       node,
       iconSize;
 
@@ -1122,8 +1124,17 @@ di('SvgIcon', function(injector) {
       height: '100%',
       width: '100%',
       preserveAspectRatio: 'xMidYMid meet',
-      viewBox: node.getAttribute('viewBox') || options.viewBox || ('0 0 ' + iconSize + ' ' + iconSize)
+      viewBox: node.getAttribute('viewBox') || options.viewBox
     };
+
+    if (!attributes.viewBox) {
+      width = node.getAttribute('width');
+      height = node.getAttribute('height');
+      if (width !== null && height !== null ) {
+        attributes.viewBox = '0 0 ' + parseFloat(width) + ' ' + parseFloat(height);
+      }
+    }
+    attributes.viewBox = attributes.viewBox || '0 0 ' + iconSize + ' ' + iconSize;
 
     Object.keys(attributes)
       .forEach(function(name) {
@@ -1610,15 +1621,15 @@ di('IconDirective', function(injector) {
 
   /**
    * @ngdoc directive
-   * @name i8Icon
-   * @module i8.icon
+   * @name webicon
+   * @module webicon
    *
    * @restrict EA
    *
    * @description
    */
 
-  function IconDirective($i8Icon) {
+  function IconDirective($webicon) {
     return {
       restrict: 'EA',
       scope: true,
@@ -1627,7 +1638,7 @@ di('IconDirective', function(injector) {
           initIconElement = injector('initIconElement'),
           altAttrName = attrs.$normalize(attrs.$attr.alt || ''),
           alt,
-          attrName =  attrs.$normalize(attrs.$attr.icon || attrs.$attr.i8Icon || ''),
+          attrName =  attrs.$normalize(attrs.$attr.icon || attrs.$attr.webicon || ''),
           cleaner = null
           ;
 
@@ -1642,7 +1653,7 @@ di('IconDirective', function(injector) {
             cleaner && cleaner();
             cleaner = null;
             if (icon) {
-              $i8Icon(icon).then(function(icon) {
+              $webicon(icon).then(function(icon) {
                 cleaner = icon.render(element);
               });
             }
@@ -1654,7 +1665,7 @@ di('IconDirective', function(injector) {
   }
 
   IconDirective.$inject = [
-    '$i8Icon'
+    '$webicon'
   ];
 
   return IconDirective;
@@ -1669,8 +1680,8 @@ di('IconProvider', function(injector) {
 
   /**
    * @ngdoc service
-   * @name $i8IconProvider
-   * @module i8.icon
+   * @name $webiconProvider
+   * @module webicon
    *
    * @description
    *
@@ -1893,14 +1904,291 @@ di('nodeWrapper', function(injector) {
 });
 'use strict';
 
+var
+  icons8Config = {
+    api: {
+      url: '//api.icons8.com/api/iconsets/svg-symbol'
+    }
+  };
+
+
+'use strict';
+
+function icons8Extension(injector, config) {
+  var
+    publicApi = injector('publicApi'),
+    iconManager = injector('iconManager'),
+    platforms = {
+      ios8: ['ios7', 'i7', 'i8', 'ios9', 'i9'],
+      win8: ['w8', 'windows8', 'windows-8', 'metro', 'windows-metro'],
+      android: ['android-kitkat', 'kitkat', 'ak'],
+      androidL: ['android-lollipop', 'android-l', 'lollipop', 'al'],
+      color: ['flat_color', 'c', 'colored'],
+      win10: ['w10', 'windows10', 'windows-10']
+    },
+    platformsMap,
+    apiToken;
+
+  platformsMap = {};
+  Object.keys(platforms).forEach(function(platform) {
+    platformsMap[platform.toLowerCase()] = platform;
+    platforms[platform].forEach(function(alias) {
+      platformsMap[alias] = platform;
+    });
+  });
+
+  iconManager
+    .setDefaultIconSet('icons8')
+    .addSvgIconSet(
+      'icons8',
+      function(icons) {
+        var
+          options = {
+            url: config.api.url,
+            params: {}
+          };
+
+        if (icons) {
+          if (!Array.isArray(icons)) {
+            icons = [icons];
+          }
+          options.params.icons = icons.join(',');
+        }
+        if (apiToken) {
+          options.params.token = apiToken;
+        }
+        return options;
+      },
+      {
+        cumulative: true,
+        iconIdParser: function(id, params) {
+          var
+            index;
+          id = String(id || '');
+          if (!Array.isArray(params)) {
+            params = [];
+          }
+          params = params.map(function(param) {
+            return String(param).toLowerCase();
+          });
+          for (index = 0; index < params.length; index++) {
+            if (platformsMap.hasOwnProperty(params[index])) {
+              return [platformsMap[params[index]], id].join('-');
+            }
+          }
+
+          return [platformsMap['c'], id].join('-');
+        }
+      }
+    );
+
+  publicApi.icons8Token = function(token) {
+    apiToken = token;
+  };
+
+  if (injector.has('configPerformer')) {
+    injector('configPerformer').strategy(function(config) {
+      if (typeof config.icons8Token != 'undefined') {
+        publicApi.icons8Token(config.icons8Token);
+      }
+    });
+  }
+
+}
+
+
+'use strict';
+
+var
+  weLoveSvgConfig = {
+    svgSets: {
+      url: '//cdn.rawgit.com/icons8/welovesvg/c10018bec3184a8b72a3d6485904c1eba4dc876f/libs',
+      libs: {
+        "brandico": 'latest',
+        "elusive-icons": '2.0.0',
+        "entypo": 'latest',
+        "flat-color-icons": '1.0.2',
+        "font-awesome": '4.3.0',
+        "fontelico": 'latest',
+        "foundation-icons": '3.0',
+        "glyphicons-halflings": "1.9",
+        "icomoon-free": 'latest',
+        "ionicons": '2.0.1',
+        "ligaturesymbols": '2.11',
+        "linecons": 'latest',
+        "maki-12px": { lib: 'maki', version: '0.4.5', filename: 'maki-12.svg' },
+        "maki-18px": { lib: 'maki', version: '0.4.5', filename: 'maki-18.svg' },
+        "maki-24px": { lib: 'maki', version: '0.4.5', filename: 'maki-24.svg' },
+        "material-design-icons-18px": { lib: 'material-design-icons', version: '1.0.2' },
+        "material-design-icons-24px": { lib: 'material-design-icons', version: '1.0.2' },
+        "material-design-icons-36px": { lib: 'material-design-icons', version: '1.0.2' },
+        "material-design-icons-48px": { lib: 'material-design-icons', version: '1.0.2' },
+        "meteocons": 'latest',
+        "metrize-icons": '1.0',
+        "mfglabs-iconset": 'latest',
+        "octicons": '2.2.2',
+        "open-iconic": '1.1.1',
+        "openwebicons": '1.3.2',
+        "raphael-icons": 'latest',
+        "simple-line-icons": '1.0.0',
+        "stateface": '1.0.0',
+        "stroke7": '1.2.0',
+        "typicons": '2.0.7',
+        "weather-icons": '1.3.2',
+        "webhostinghub-glyphs": 'latest',
+        "wpf-ui-framework-icons": 'latest',
+        "zocial": '1.0.0'
+      }
+    },
+    aliases: {
+      "color-icons": 'flat-color-icons',
+      "glyphicons": 'glyphicons-halflings',
+      "ion": 'ionicons',
+      "lsf": 'ligaturesymbols',
+      "maki": 'maki-24px',
+      "material-design-icons": 'material-design-icons-24px',
+      "material-icons": 'material-design-icons'
+    }
+  };
+
+'use strict';
+
+function weLoveSvgExtension(di, config) {
+  var
+    iconManager = di('iconManager'),
+    iconIdFilter,
+    materialDesignIconIdResolver,
+    makiIconIdResolver,
+    options,
+    svgSets;
+
+  iconIdFilter = function(id) {
+    return String(id || '')
+      .replace(/_/g, '-');
+  };
+
+  materialDesignIconIdResolver = function(id) {
+    return iconIdFilter(id)
+      .replace(/^ic-/, '')
+      .replace(/-\d+px$/, '');
+  };
+
+  makiIconIdResolver = function(id) {
+    return iconIdFilter(id)
+      .replace(/-\d+$/, '');
+  };
+
+  options = {
+    iconIdResolver: iconIdFilter,
+    iconIdParser: iconIdFilter,
+    preloadable: false
+  };
+
+  function addSvgIconSet(name, url) {
+    var
+      opts;
+
+    switch(name) {
+      case 'maki':
+        opts = copy(options, { iconIdResolver: makiIconIdResolver });
+        break;
+
+      case 'material-design-icons':
+        opts = copy(options, { iconIdResolver: materialDesignIconIdResolver });
+        break;
+
+      default:
+        opts = copy(options);
+    }
+
+    iconManager.addSvgIconSet(name, url, opts)
+  }
+
+  svgSets = config.svgSets;
+  Object.keys(svgSets.libs || {}).forEach(function(name) {
+    var
+      lib,
+      version,
+      filename;
+
+    lib = name;
+    filename = name + '.svg';
+
+    if (typeof svgSets.libs[name] == 'string') {
+      version = svgSets.libs[name];
+    }
+    else {
+      lib = svgSets.libs[name].lib || lib;
+      version = svgSets.libs[name].version || 'latest';
+      filename = svgSets.libs[name].filename || filename;
+    }
+
+    addSvgIconSet(
+      name,
+      [svgSets.url, lib, version, filename].join('/')
+    );
+  });
+
+  Object.keys(config.libs || {}).forEach(function(name) {
+    addSvgIconSet(name, config.libs[name]);
+  });
+
+  Object.keys(config.aliases || {}).forEach(function(alias) {
+    iconManager.addIconSetAlias(
+      config.aliases[alias],
+      alias
+    )
+  });
+
+  function copy(/* ...objects */) {
+    var
+      result = {};
+
+    Array.prototype.slice.call(arguments).forEach(function(object) {
+      if (object) {
+        Object.keys(object).forEach(function(key) {
+          result[key] = object[key];
+        });
+      }
+    });
+
+    return result;
+  }
+
+}
+'use strict';
+
+extension(function(injector) {
+
+  icons8Extension(injector, icons8Config);
+
+});
+
+
+'use strict';
+
+extension(function(injector) {
+
+  weLoveSvgExtension(injector, weLoveSvgConfig);
+
+});
+
+
+'use strict';
+
+function extension(fn) {
+  ready(fn);
+}
+'use strict';
+
 /**
  * @ngdoc module
- * @name i8.icon
+ * @name webicon
  * @description
  * Icon
  */
 
-angular.module('i8.icon', [])
+angular.module('webicon', [])
   .config([
     '$provide',
     '$compileProvider',
@@ -1911,14 +2199,14 @@ angular.module('i8.icon', [])
             return angular;
           })
         });
-      $provide.provider('$i8Icon', injector('IconProvider'));
-      $compileProvider.directive('i8Icon', injector('IconDirective'));
+      $provide.provider('$webicon', injector('IconProvider'));
+      $compileProvider.directive('webicon', injector('IconDirective'));
     }
   ])
   .run([
-    '$i8Icon',
-    function($i8Icon) {
-      $i8Icon.$checkLazyPreload();
+    '$webicon',
+    function($webicon) {
+      $webicon.$checkLazyPreload();
     }
   ])
 ;
