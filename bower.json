@@ -1,6 +1,6 @@
 {
   "name": "webicon",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "main": [
     "angular-webicon.js",
     "jquery-webicon.js"
