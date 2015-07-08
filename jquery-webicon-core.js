@@ -381,10 +381,10 @@ di('AbstractRemoteResourceScope', function(injector) {
 
   return inherit(AbstractRemoteResourceScope, AbstractScope, {
 
-    preload: function() {
-      return this._preloadable
+    preload: function(force) {
+      return this._preloadable || force
         ? this._getResource()
-        : true;
+        : null;
     },
 
     _resolveUrl: function(url) {
@@ -510,7 +510,7 @@ di('AbstractScope', function(injector) {
   AbstractScope.prototype = {
 
     preload: function() {
-      return true;
+      return null;
     },
 
     hasIcon: function() {
@@ -643,7 +643,7 @@ di('SvgCumulativeIconSetScope', function(injector) {
     },
 
     preload: function() {
-      return true;
+      return null;
     },
 
     getIcon: function(iconId, params) {
@@ -791,23 +791,35 @@ di('ScopeCollection', function(injector) {
       }
     },
 
-    preload: function() {
+    preload: function(force) {
       var
-        Promise = injector('Promise');
+        Promise = injector('Promise'),
+        promises = [];
 
-      return Promise.all(
-        this.collection.map(function(item) {
-          return Promise.resolve(item.preload())
-            .then(null, function() {
-              return false;
+      this.collection.forEach(function(item) {
+        var
+          value;
+        value = item.preload(force);
+        if (value && typeof value == 'object' && typeof value.then == 'function') {
+          promises.push(value);
+        }
+      });
+
+      if (promises.length > 0) {
+        return Promise.all(
+          promises.map(function(promise) {
+            return promise.then(null, function() {
+              return null;
             })
-        })
-      )
-        .then(function() {
-          return true;
-        }, function() {
-          return false;
-        });
+          })
+        )
+          .then(function() {
+            return null;
+          });
+      }
+      else {
+        return null;
+      }
     },
 
     getIconScope: function(iconId, params) {
@@ -1188,14 +1200,53 @@ di('iconManager', function(injector) {
       return this._defaultSvgIconSize;
     },
 
-    preload: function() {
+    preload: function(names) {
       var
-        collections = this._collections;
+        self = this,
+        collections = this._collections,
+        namesSet = {},
+        useSetOfNames = false,
+        forceAll = false,
+        promise,
+        promises = [],
+        iconSetPromisesMap = {},
+        Promise = injector('Promise');
+
+      if (names && typeof names == 'object') {
+        (
+          Array.isArray(names)
+            ? names
+            : Object.keys(names)
+        )
+          .forEach(function(name) {
+            namesSet[String(name).toLowerCase()] = true;
+          });
+        useSetOfNames = true;
+      }
+      else if (names) {
+        forceAll = true;
+      }
 
       Object.keys(collections).forEach(function(id) {
-        collections[id].preload();
+        var
+          value;
+        value = collections[id].preload(
+          forceAll || (useSetOfNames && namesSet.getHasOwnProperty(String(id).toLowerCase()))
+        );
+        if (value && typeof value == 'object' && typeof value.then == 'function') {
+          promises.push(value);
+          if (id != SINGLE_ICONS_COLLECTION_ID) {
+            iconSetPromisesMap[id] = value
+              .then(function() {
+                return self._getCollection(id);
+              });
+          }
+        }
       });
 
+      promise = Promise.all(promises);
+      promise.iconSets = iconSetPromisesMap;
+      return promise;
     },
 
     getIcon: function(id, params) {
@@ -1557,8 +1608,18 @@ di('publicApi', function(injector) {
       return this;
     },
 
-    preload: function() {
-      iconManager.preload();
+    preload: function(names, fn) {
+      var
+        promise;
+
+      if (typeof names == 'function') {
+        fn = names;
+        names = null;
+      }
+
+      promise = iconManager.preload(names);
+      fn && fn(promise);
+
       return this;
     },
 
@@ -2082,7 +2143,8 @@ di('configPerformBaseStrategy', function(injector) {
           ? config
           : null;
       }
-    ).forEach(function(config) {
+    )
+      .forEach(function(config) {
         if (!iconManager.hasIconSet(config.url)) {
           parseSvgIconSizeConfig(config);
           publicApi.defaultSvgSetUrl(config.url, config);
@@ -2104,7 +2166,8 @@ di('configPerformBaseStrategy', function(injector) {
           ? config
           : null;
       }
-    ).forEach(function(config) {
+    )
+      .forEach(function(config) {
         if (!iconManager.hasIconSet(config.alias)) {
           publicApi.sourceAlias(config.id, config.alias);
         }
@@ -2123,19 +2186,24 @@ di('configPerformBaseStrategy', function(injector) {
           ? config
           : null;
       }
-    ).forEach(function(config) {
+    )
+      .forEach(function(config) {
         publicApi.defaultSource(config.id);
       });
 
     parseConfigs(
       config.defaultSvgIconSize,
       parseSvgIconSizeConfig
-    ).forEach(function(config) {
+    )
+      .forEach(function(config) {
         publicApi.defaultSvgIconSize(config.iconSize);
       });
 
     if (config.preload) {
-      publicApi.preload();
+      publicApi.preload.apply(
+        publicApi,
+        parsePreloadConfig(config.preload)
+      );
     }
   };
 
@@ -2232,6 +2300,37 @@ di('configPerformBaseStrategy', function(injector) {
     return config.iconSize
       ? config
       : null;
+  }
+
+  function parsePreloadConfig(config) {
+    if (typeof config == 'function') {
+      return [config];
+    }
+    else if (config && typeof config == 'object') {
+      if (Array.isArray(config)) {
+        return [config];
+      }
+      if (Object.keys(config).length > 0
+        && !config.hasOwnProperty('force')
+        && !config.hasOwnProperty('names')
+        && !config.hasOwnProperty('fn')
+      ) {
+        return [config];
+      }
+
+      return [
+        config.force || config.names || undefined,
+        config.fn || undefined
+      ]
+        .filter(function(value) {
+          return typeof value != 'undefined';
+        })
+    }
+    else {
+      return config
+        ? [true]
+        : [];
+    }
   }
 
 });

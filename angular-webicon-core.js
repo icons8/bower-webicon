@@ -23,23 +23,35 @@ di('ScopeCollection', function(injector) {
       }
     },
 
-    preload: function() {
+    preload: function(force) {
       var
-        Promise = injector('Promise');
+        Promise = injector('Promise'),
+        promises = [];
 
-      return Promise.all(
-        this.collection.map(function(item) {
-          return Promise.resolve(item.preload())
-            .then(null, function() {
-              return false;
+      this.collection.forEach(function(item) {
+        var
+          value;
+        value = item.preload(force);
+        if (value && typeof value == 'object' && typeof value.then == 'function') {
+          promises.push(value);
+        }
+      });
+
+      if (promises.length > 0) {
+        return Promise.all(
+          promises.map(function(promise) {
+            return promise.then(null, function() {
+              return null;
             })
-        })
-      )
-        .then(function() {
-          return true;
-        }, function() {
-          return false;
-        });
+          })
+        )
+          .then(function() {
+            return null;
+          });
+      }
+      else {
+        return null;
+      }
     },
 
     getIconScope: function(iconId, params) {
@@ -420,14 +432,53 @@ di('iconManager', function(injector) {
       return this._defaultSvgIconSize;
     },
 
-    preload: function() {
+    preload: function(names) {
       var
-        collections = this._collections;
+        self = this,
+        collections = this._collections,
+        namesSet = {},
+        useSetOfNames = false,
+        forceAll = false,
+        promise,
+        promises = [],
+        iconSetPromisesMap = {},
+        Promise = injector('Promise');
+
+      if (names && typeof names == 'object') {
+        (
+          Array.isArray(names)
+            ? names
+            : Object.keys(names)
+        )
+          .forEach(function(name) {
+            namesSet[String(name).toLowerCase()] = true;
+          });
+        useSetOfNames = true;
+      }
+      else if (names) {
+        forceAll = true;
+      }
 
       Object.keys(collections).forEach(function(id) {
-        collections[id].preload();
+        var
+          value;
+        value = collections[id].preload(
+          forceAll || (useSetOfNames && namesSet.getHasOwnProperty(String(id).toLowerCase()))
+        );
+        if (value && typeof value == 'object' && typeof value.then == 'function') {
+          promises.push(value);
+          if (id != SINGLE_ICONS_COLLECTION_ID) {
+            iconSetPromisesMap[id] = value
+              .then(function() {
+                return self._getCollection(id);
+              });
+          }
+        }
       });
 
+      promise = Promise.all(promises);
+      promise.iconSets = iconSetPromisesMap;
+      return promise;
     },
 
     getIcon: function(id, params) {
@@ -789,8 +840,18 @@ di('publicApi', function(injector) {
       return this;
     },
 
-    preload: function() {
-      iconManager.preload();
+    preload: function(names, fn) {
+      var
+        promise;
+
+      if (typeof names == 'function') {
+        fn = names;
+        names = null;
+      }
+
+      promise = iconManager.preload(names);
+      fn && fn(promise);
+
       return this;
     },
 
@@ -1228,10 +1289,10 @@ di('AbstractRemoteResourceScope', function(injector) {
 
   return inherit(AbstractRemoteResourceScope, AbstractScope, {
 
-    preload: function() {
-      return this._preloadable
+    preload: function(force) {
+      return this._preloadable || force
         ? this._getResource()
-        : true;
+        : null;
     },
 
     _resolveUrl: function(url) {
@@ -1357,7 +1418,7 @@ di('AbstractScope', function(injector) {
   AbstractScope.prototype = {
 
     preload: function() {
-      return true;
+      return null;
     },
 
     hasIcon: function() {
@@ -1490,7 +1551,7 @@ di('SvgCumulativeIconSetScope', function(injector) {
     },
 
     preload: function() {
-      return true;
+      return null;
     },
 
     getIcon: function(iconId, params) {
@@ -1689,10 +1750,12 @@ di('IconProvider', function(injector) {
 
   function IconProvider() {
     var
-      lazyPreload = false;
+      lazyPreload = [];
 
     this.preload = function() {
-      lazyPreload = true;
+      lazyPreload.push(
+        Array.prototype.slice.call(arguments)
+      );
       return this;
     };
 
@@ -1707,13 +1770,35 @@ di('IconProvider', function(injector) {
       iconService = function(id) {
         return iconManager.getIcon(id);
       };
-      iconService.preload = function() {
-        iconManager.preload();
+      iconService.preload = function(names, fn) {
+        var
+          promise;
+
+        if (typeof names == 'function' || (Array.isArray(names) && typeof names.slice(-1)[0] == 'function')) {
+          fn = names;
+          names = null;
+        }
+
+        promise = iconManager.preload(names);
+        if (fn) {
+          $injector.invoke(fn, null, {
+            $promise: promise
+          });
+        }
+        return promise;
       };
 
       iconService.$checkLazyPreload = function() {
-        if (lazyPreload) {
-          this.preload();
+        var
+          self = this;
+
+        if (lazyPreload.length) {
+          lazyPreload.forEach(function(args) {
+            self.preload.apply(
+              self,
+              args
+            );
+          });
         }
       };
 
