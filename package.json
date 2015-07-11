@@ -13,10 +13,12 @@
     "icons8",
     "i8",
     "icon",
-    "icon-set",
-    "svg-icon",
-    "svg-set",
-    "svg-sprite"
+    "icon set",
+    "svg icon",
+    "svg set",
+    "svg sprite",
+    "jquery-plugin",
+    "angular module"
   ],
   "bugs": {
     "url": "https://github.com/icons8/webicon/issues"
